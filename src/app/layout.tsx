@@ -9,7 +9,6 @@ import routerProvider from "@refinedev/nextjs-router"
 import { Provider } from "react-redux"
 
 import "./globals.css"
-import { AuthProvider } from "@/providers/auth-provider/auth-context"
 import { authProviderClient } from "@/providers/auth-provider/auth-provider.client"
 import { dataProvider } from "@/providers/data-provider"
 import { store } from "@/store";
@@ -33,47 +32,45 @@ export default function RootLayout({
         <body>
           <Suspense>
             <RefineKbarProvider>
-              <AuthProvider>
-                <Refine
-                  routerProvider={routerProvider}
-                  authProvider={authProviderClient}
-                  dataProvider={dataProvider}
-                  resources={[
-                    {
-                      name: "dashboard",
-                      list: "/dashboard",
-                    },
-                    // {
-                    //   name: "blog_posts",
-                    //   list: "/blog-posts",
-                    //   create: "/blog-posts/create",
-                    //   edit: "/blog-posts/edit/:id",
-                    //   show: "/blog-posts/show/:id",
-                    //   meta: {
-                    //     canDelete: true,
-                    //   },
-                    // },
-                    // {
-                    //   name: "categories",
-                    //   list: "/categories",
-                    //   create: "/categories/create",
-                    //   edit: "/categories/edit/:id",
-                    //   show: "/categories/show/:id",
-                    //   meta: {
-                    //     canDelete: true,
-                    //   },
-                    // },
-                  ]}
-                  options={{
-                    syncWithLocation: true,
-                    warnWhenUnsavedChanges: true,
-                    projectId: "6zlbqX-cY8J84-PvPF6c",
-                  }}
-                >
-                  {children}
-                  <RefineKbar />
-                </Refine>
-              </AuthProvider>
+              <Refine
+                routerProvider={routerProvider}
+                authProvider={authProviderClient}
+                dataProvider={dataProvider}
+                resources={[
+                  {
+                    name: "dashboard",
+                    list: "/dashboard",
+                  },
+                  // {
+                  //   name: "blog_posts",
+                  //   list: "/blog-posts",
+                  //   create: "/blog-posts/create",
+                  //   edit: "/blog-posts/edit/:id",
+                  //   show: "/blog-posts/show/:id",
+                  //   meta: {
+                  //     canDelete: true,
+                  //   },
+                  // },
+                  // {
+                  //   name: "categories",
+                  //   list: "/categories",
+                  //   create: "/categories/create",
+                  //   edit: "/categories/edit/:id",
+                  //   show: "/categories/show/:id",
+                  //   meta: {
+                  //     canDelete: true,
+                  //   },
+                  // },
+                ]}
+                options={{
+                  syncWithLocation: true,
+                  warnWhenUnsavedChanges: true,
+                  projectId: "6zlbqX-cY8J84-PvPF6c",
+                }}
+              >
+                {children}
+                <RefineKbar />
+              </Refine>
             </RefineKbarProvider>
           </Suspense>
         </body>

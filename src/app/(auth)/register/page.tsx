@@ -1,6 +1,6 @@
 'use client';
 
-import { useLogin, useRegister } from '@refinedev/core';
+import { useRegister } from '@refinedev/core';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -23,20 +23,22 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Spinner } from '@/components/ui/spinner';
-import { Icons } from '@/components/icons';
 
 const formSchema = z.object({
+  firstName: z.string().min(2, { message: "First name must be at least 2 characters." }),
+  lastName: z.string().min(2, { message: "Last name must be at least 2 characters." }),
   email: z.string().email({ message: "Invalid email address" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
 });
 
 export default function Register() {
   const { mutate: register, isPending: isRegistering, error: registerError } = useRegister();
-  const { mutate: login, isPending: isLoggingIn } = useLogin();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      firstName: '',
+      lastName: '',
       email: '',
       password: '',
     },
@@ -45,8 +47,6 @@ export default function Register() {
   function onSubmit(values: z.infer<typeof formSchema>) {
     register(values);
   }
-
-  const isLoading = isRegistering || isLoggingIn;
 
   return (
     <div className="w-full max-w-md">
@@ -62,7 +62,33 @@ export default function Register() {
             </div>
           )}
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>First Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="John" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Doe" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="email"
@@ -70,7 +96,7 @@ export default function Register() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="m@example.com" {...field} />
+                      <Input placeholder="john.doe@example.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -89,7 +115,7 @@ export default function Register() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full" disabled={isRegistering}>
                 {isRegistering ? (
                   <Spinner className="h-4 w-4" />
                 ) : (
@@ -98,29 +124,6 @@ export default function Register() {
               </Button>
             </form>
           </Form>
-          <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                Or continue with
-              </span>
-            </div>
-          </div>
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => login({ provider: 'google' })}
-            disabled={isLoading}
-          >
-            {isLoggingIn ? (
-              <Spinner className="mr-2 h-4 w-4" />
-            ) : (
-              <Icons.google className="mr-2 h-4 w-4" />
-            )}
-            Google
-          </Button>
           <div className="mt-4 text-center text-sm">
             Already have an account?{' '}
             <Link href="/login" className="underline">

@@ -19,6 +19,7 @@ import {
   setBcc,
 } from "@/store/features/campaigns/campaignSlice";
 import dynamic from "next/dynamic";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const RichTextEditor = dynamic(
   () => import("@/components/ui/rich-text-editor"),
@@ -154,33 +155,34 @@ export function Editor({ form }: EditorProps) {
     }
   };
   return (
-    <div className="flex flex-1 flex-col bg-neutral-light dark:bg-neutral-dark overflow-y-auto">
-      <div className="p-6 space-y-4">
-        <FormField
-          control={form.control}
-          name="subject"
-          render={({ field }) => (
-            <FormItem>
-              <Label
-                htmlFor="subject"
-                className="text-base font-medium leading-normal pb-2 text-text-light dark:text-text-dark"
-              >
-                Subject
-              </Label>
-              <FormControl>
-                <Input
-                  {...field}
-                  id="subject"
-                  placeholder="Enter your email subject line"
-                  className="h-14 p-[15px]"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <div className="flex flex-1 flex-col bg-neutral-light dark:bg-neutral-dark overflow-hidden">
+      <ScrollArea className="h-0 flex-1">
+        <div className="p-6 space-y-4">
+          <FormField
+            control={form.control}
+            name="subject"
+            render={({ field }) => (
+              <FormItem>
+                <Label
+                  htmlFor="subject"
+                  className="text-base font-medium leading-normal pb-2 text-text-light dark:text-text-dark"
+                >
+                  Subject
+                </Label>
+                <FormControl>
+                  <Input
+                    {...field}
+                    id="subject"
+                    placeholder="Enter your email subject line"
+                    className="h-14 p-[15px]"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <div className="flex w-full gap-4">
+          <div className="flex w-full gap-4">
           <div className="flex flex-col w-1/2">
             <Label
               htmlFor="cc"
@@ -315,7 +317,8 @@ export function Editor({ form }: EditorProps) {
             </div>
           </div>
         )}
-      </div>
+        </div>
+      </ScrollArea>
     </div>
   );
 }

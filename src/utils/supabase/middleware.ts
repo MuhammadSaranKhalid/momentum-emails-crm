@@ -51,7 +51,30 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getUser();
+  // Get user session
+  const { data: { user }, error } = await supabase.auth.getUser();
+
+  // Define protected routes
+  const protectedRoutes = ['/dashboard'];
+  const authRoutes = ['/login', '/register'];
+  const isProtectedRoute = protectedRoutes.some(route => 
+    request.nextUrl.pathname.startsWith(route)
+  );
+  const isAuthRoute = authRoutes.some(route => 
+    request.nextUrl.pathname.startsWith(route)
+  );
+
+  // Redirect unauthenticated users away from protected routes
+  if (isProtectedRoute && (!user || error)) {
+    const redirectUrl = new URL('/login', request.url);
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  // Redirect authenticated users away from auth pages to dashboard
+  if (isAuthRoute && user && !error) {
+    const redirectUrl = new URL('/dashboard', request.url);
+    return NextResponse.redirect(redirectUrl);
+  }
 
   return response;
 }

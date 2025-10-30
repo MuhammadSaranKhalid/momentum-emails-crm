@@ -4,27 +4,7 @@ import type { AuthProvider } from "@refinedev/core"
 import { supabaseBrowserClient } from "@/utils/supabase/client"
 
 export const authProviderClient: AuthProvider = {
-  login: async ({ email, password, provider }) => {
-    if (provider === "google") {
-      const { error } = await supabaseBrowserClient.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: window.location.origin,
-        },
-      })
-
-      if (error) {
-        return {
-          success: false,
-          error,
-        }
-      }
-
-      return {
-        success: true,
-      }
-    }
-
+  login: async ({ email, password }) => {
     if (email && password) {
       const { error } = await supabaseBrowserClient.auth.signInWithPassword({
         email,
@@ -67,11 +47,18 @@ export const authProviderClient: AuthProvider = {
       redirectTo: "/login",
     }
   },
-  register: async ({ email, password }) => {
+  register: async ({ email, password, firstName, lastName }) => {
     try {
       const { data, error } = await supabaseBrowserClient.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+            full_name: `${firstName} ${lastName}`,
+          },
+        },
       })
 
       if (error) {
@@ -138,9 +125,10 @@ export const authProviderClient: AuthProvider = {
     const { data } = await supabaseBrowserClient.auth.getUser()
 
     if (data?.user) {
+      const fullName = data.user.user_metadata?.full_name || data.user.email;
       return {
         ...data.user,
-        name: data.user.email,
+        name: fullName,
       }
     }
 

@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Spinner } from "@/components/ui/spinner";
 import { Search, Filter, ChevronDown, X } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -18,6 +19,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface RecipientsSidebarProps {
   members: Member[];
@@ -122,7 +124,7 @@ export function RecipientsSidebar({ members, isLoading }: RecipientsSidebarProps
     filteredMembers.every((m: Member) => selectedMemberIds.includes(m.id));
 
   return (
-    <aside className="flex w-96 flex-col border-l bg-card h-full">
+    <aside className="flex w-96 flex-col border-l bg-card h-full overflow-hidden">
       <div className="flex flex-col p-4 space-y-4 shrink-0">
         <h2 className="text-lg font-semibold">
           Recipients
@@ -303,7 +305,7 @@ export function RecipientsSidebar({ members, isLoading }: RecipientsSidebarProps
       </div>
       
       {/* Scrollable Members List */}
-      <div className="flex flex-col flex-1 overflow-hidden px-4 pb-4">
+      <div className="flex flex-col flex-1 min-h-0 px-4 pb-4">
         <div className="flex items-center justify-between py-2 border-t shrink-0">
           <Label className="flex items-center space-x-3 cursor-pointer">
             <Checkbox 
@@ -317,9 +319,10 @@ export function RecipientsSidebar({ members, isLoading }: RecipientsSidebarProps
           </span>
         </div>
         
-        <div className="flex-1 overflow-y-auto mt-2">
+        <ScrollArea className="h-0 flex-1 mt-2">
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
+            <div className="flex flex-col items-center justify-center py-8 gap-3">
+              <Spinner className="h-6 w-6" />
               <p className="text-sm text-muted-foreground">Loading members...</p>
             </div>
           ) : filteredMembers.length === 0 ? (
@@ -354,7 +357,7 @@ export function RecipientsSidebar({ members, isLoading }: RecipientsSidebarProps
               ))}
             </div>
           )}
-        </div>
+        </ScrollArea>
       </div>
     </aside>
   );

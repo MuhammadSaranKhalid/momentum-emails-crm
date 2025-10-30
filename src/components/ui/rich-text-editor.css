@@ -1,0 +1,880 @@
+/* ===================================
+   Rich Text Editor Custom Styling
+   CSS Variables-based theme (Tailwind v4 compatible)
+   =================================== */
+
+/* Wrapper for additional styling control */
+.rich-text-editor-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+/* Container & Wrapper */
+.sun-editor {
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.75rem;
+  overflow: visible; /* Changed from hidden to allow dropdowns to extend */
+  background-color: hsl(var(--background));
+  font-family: inherit;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sun-editor .se-wrapper {
+  border: 0;
+  overflow: hidden; /* Keep content overflow hidden for wrapper */
+  border-radius: 0.75rem; /* Maintain rounded corners */
+}
+
+.sun-editor .se-toolbar {
+  background: linear-gradient(to bottom, hsl(var(--background)), hsl(var(--muted) / 0.2));
+  border-bottom: 1px solid hsl(var(--border));
+  padding: 0.75rem 1rem;
+  outline: none;
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.sun-editor .se-toolbar .se-btn-module-border {
+  border-right: 1px solid hsl(var(--border) / 0.4);
+  margin: 0 0.5rem 0 0.25rem;
+  padding-right: 0.5rem;
+}
+
+/* Button groups styling */
+.sun-editor .se-toolbar .se-btn-module {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 1px;
+  margin: 0 0.25rem 0 0 !important;
+  padding: 0 !important;
+}
+
+.sun-editor .se-toolbar .se-btn-module:first-child {
+  margin-left: 0 !important;
+}
+
+/* Remove any extra spacing from button wrappers */
+.sun-editor .se-toolbar .se-btn-module > * {
+  margin: 0;
+}
+
+/* Ensure buttons don't have extra space from text content */
+.sun-editor .se-btn * {
+  pointer-events: none;
+}
+
+/* Buttons */
+.sun-editor .se-btn {
+  color: hsl(var(--foreground) / 0.8);
+  border-radius: 0.5rem;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 36px;
+  width: 36px;
+  min-width: 36px;
+  max-width: 36px;
+  padding: 0 !important;
+  border: 0;
+  background: transparent;
+  margin: 0 1px;
+  position: relative;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.sun-editor .se-btn svg {
+  width: 18px;
+  height: 18px;
+  opacity: 0.9;
+  flex-shrink: 0;
+}
+
+.sun-editor .se-btn:enabled:hover,
+.sun-editor .se-btn:enabled:focus {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--foreground));
+  outline: none;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+}
+
+.sun-editor .se-btn:enabled:hover svg,
+.sun-editor .se-btn:enabled:focus svg {
+  opacity: 1;
+}
+
+.sun-editor .se-btn:enabled.active {
+  background-color: hsl(var(--primary) / 0.12);
+  color: hsl(var(--primary));
+  font-weight: 500;
+  box-shadow: 0 0 0 1px hsl(var(--primary) / 0.2) inset;
+}
+
+.sun-editor .se-btn:enabled.on {
+  background-color: hsl(var(--primary) / 0.12);
+  color: hsl(var(--primary));
+  box-shadow: 0 0 0 1px hsl(var(--primary) / 0.2) inset;
+}
+
+.sun-editor .se-btn:enabled:active {
+  transform: scale(0.96);
+}
+
+.sun-editor .se-btn-list:enabled:hover,
+.sun-editor .se-btn-list:enabled:focus {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+  outline: none;
+}
+
+/* Toolbar More Button */
+.sun-editor .se-toolbar .se-btn-module .se-btn.se-btn-more {
+  color: hsl(var(--muted-foreground));
+}
+
+.sun-editor .se-toolbar .se-btn-module .se-btn.se-btn-more:hover {
+  color: hsl(var(--foreground));
+}
+
+/* Submenu & Dropdowns */
+.sun-editor .se-menu-list,
+.sun-editor .se-list-layer,
+.sun-editor .se-submenu {
+  background: hsl(var(--popover)) !important;
+  background-color: hsl(var(--popover)) !important;
+  color: hsl(var(--popover-foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 0.5rem !important;
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important;
+  padding: 0.25rem !important;
+  z-index: 9998 !important; /* Ensure dropdowns appear above editor content */
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  -webkit-background-clip: padding-box !important;
+  background-clip: padding-box !important;
+}
+
+.sun-editor .se-list-layer .se-list-inner {
+  background: hsl(var(--popover)) !important;
+  background-color: hsl(var(--popover)) !important;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 0.125rem;
+}
+
+.sun-editor .se-list-layer .se-list-inner ul {
+  background: hsl(var(--popover)) !important;
+  background-color: hsl(var(--popover)) !important;
+}
+
+.sun-editor .se-list-layer .se-list-inner ul.se-list-basic {
+  background: hsl(var(--popover)) !important;
+  background-color: hsl(var(--popover)) !important;
+  margin: 0;
+  padding: 0;
+}
+
+.sun-editor .se-list-layer .se-list-inner::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sun-editor .se-list-layer .se-list-inner::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+.sun-editor .se-list-layer .se-list-inner::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground) / 0.2);
+  border-radius: 0.25rem;
+}
+
+.sun-editor .se-list-layer .se-list-inner::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--muted-foreground) / 0.4);
+}
+
+.sun-editor .se-list-basic li {
+  margin: 1px 0;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.sun-editor .se-list-basic li button {
+  color: hsl(var(--foreground)) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  padding: 0.5rem 0.75rem !important;
+  transition: all 0.15s ease;
+  border-radius: 0.375rem !important;
+  width: 100%;
+  text-align: left;
+}
+
+.sun-editor .se-list-basic li button:hover {
+  background-color: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+}
+
+.sun-editor .se-list-basic li button:active {
+  transform: scale(0.98);
+}
+
+/* Ensure all dropdown wrappers are fully opaque */
+.sun-editor .se-list-layer,
+.sun-editor .se-list-layer * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.sun-editor .se-list-layer > div,
+.sun-editor .se-submenu > div {
+  background: hsl(var(--popover)) !important;
+  background-color: hsl(var(--popover)) !important;
+}
+
+/* Variables submenu custom styling */
+.sun-editor .se-list-layer .se-list-title {
+  color: hsl(var(--muted-foreground)) !important;
+  background-color: transparent !important;
+  font-size: 0.6875rem !important;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.5rem 0.75rem 0.25rem !important;
+  margin-top: 0.25rem;
+}
+
+.sun-editor .se-list-layer .se-list-title:first-child {
+  margin-top: 0;
+}
+
+/* Editor Content Area */
+.sun-editor .se-wrapper-inner {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.sun-editor .se-wrapper-inner.se-wrapper-wysiwyg {
+  padding: 2rem;
+  padding-bottom: 6rem !important;
+  min-height: 400px;
+}
+
+.sun-editor .se-wrapper-inner.se-wrapper-wysiwyg:empty::before {
+  content: attr(placeholder);
+  color: hsl(var(--muted-foreground));
+}
+
+.sun-editor .se-wrapper-code {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  padding: 1rem;
+  font-size: 0.875rem;
+}
+
+/* Placeholder */
+.sun-editor .se-placeholder {
+  color: hsl(var(--muted-foreground)) !important;
+  font-size: 0.9375rem !important;
+  padding: 2rem !important;
+  font-weight: 400;
+  opacity: 0.6;
+}
+
+/* Content Typography */
+.sun-editor-editable {
+  color: hsl(var(--foreground));
+}
+
+.sun-editor-editable p {
+  margin-bottom: 1rem;
+}
+
+.sun-editor-editable h1,
+.sun-editor-editable h2,
+.sun-editor-editable h3,
+.sun-editor-editable h4,
+.sun-editor-editable h5,
+.sun-editor-editable h6 {
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.sun-editor-editable h1 { font-size: 2rem; }
+.sun-editor-editable h2 { font-size: 1.5rem; }
+.sun-editor-editable h3 { font-size: 1.25rem; }
+.sun-editor-editable h4 { font-size: 1.125rem; }
+
+.sun-editor-editable a {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.sun-editor-editable a:hover {
+  color: hsl(var(--primary) / 0.8);
+}
+
+.sun-editor-editable blockquote {
+  border-left: 4px solid hsl(var(--border));
+  padding-left: 1rem;
+  font-style: italic;
+  color: hsl(var(--muted-foreground));
+  margin: 1rem 0;
+}
+
+.sun-editor-editable ul,
+.sun-editor-editable ol {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.sun-editor-editable code {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.sun-editor-editable pre {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  padding: 1rem;
+  border-radius: 0.375rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.sun-editor-editable pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+.sun-editor-editable table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+}
+
+.sun-editor-editable table td,
+.sun-editor-editable table th {
+  border: 1px solid hsl(var(--border));
+  padding: 0.75rem;
+}
+
+.sun-editor-editable table th {
+  background-color: hsl(var(--muted));
+  font-weight: 600;
+}
+
+.sun-editor-editable hr {
+  border-color: hsl(var(--border));
+  margin: 1.5rem 0;
+}
+
+/* Dialogs */
+.sun-editor .se-dialog {
+  background-color: hsl(var(--background) / 0.8);
+  backdrop-filter: blur(4px);
+}
+
+.sun-editor .se-dialog .se-dialog-inner {
+  background-color: hsl(var(--background)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25) !important;
+  overflow: hidden;
+}
+
+.sun-editor .se-dialog .se-dialog-inner .se-dialog-content {
+  margin: 100px auto !important;
+  max-width: 90%;
+}
+
+.sun-editor .se-dialog .se-dialog-header {
+  background: linear-gradient(to bottom, hsl(var(--background)), hsl(var(--muted) / 0.3));
+  border-bottom: 1px solid hsl(var(--border));
+  padding: 1.25rem 1.5rem;
+}
+
+.sun-editor .se-dialog .se-modal-title {
+  color: hsl(var(--foreground)) !important;
+  font-weight: 600;
+  font-size: 1.125rem;
+}
+
+.sun-editor .se-dialog .se-dialog-body {
+  background-color: hsl(var(--background)) !important;
+  padding: 1.5rem;
+}
+
+.sun-editor .se-dialog .se-dialog-footer {
+  background-color: hsl(var(--muted) / 0.2);
+  border-top: 1px solid hsl(var(--border));
+  padding: 1rem 1.5rem;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.sun-editor .se-dialog .se-dialog-close {
+  color: hsl(var(--muted-foreground)) !important;
+  transition: all 0.15s ease;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+}
+
+.sun-editor .se-dialog .se-dialog-close:hover {
+  color: hsl(var(--foreground)) !important;
+  background-color: hsl(var(--accent));
+}
+
+/* Form Elements in Dialogs */
+.sun-editor .se-dialog .se-input-form,
+.sun-editor .se-dialog .se-input-url {
+  background-color: hsl(var(--background)) !important;
+  border: 1px solid hsl(var(--input)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-radius: 0.5rem !important;
+  padding: 0.625rem 0.875rem !important;
+  font-size: 0.875rem !important;
+  transition: all 0.15s ease;
+}
+
+.sun-editor .se-dialog .se-input-form:focus,
+.sun-editor .se-dialog .se-input-url:focus {
+  outline: none !important;
+  border-color: hsl(var(--ring)) !important;
+  box-shadow: 0 0 0 3px hsl(var(--ring) / 0.1) !important;
+}
+
+.sun-editor .se-dialog .se-input-form::placeholder,
+.sun-editor .se-dialog .se-input-url::placeholder {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.sun-editor .se-dialog .se-btn-primary {
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  border: 0 !important;
+  border-radius: 0.5rem !important;
+  padding: 0.625rem 1.25rem !important;
+  font-weight: 500;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.sun-editor .se-dialog .se-btn-primary:hover {
+  background-color: hsl(var(--primary) / 0.9) !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  transform: translateY(-1px);
+}
+
+.sun-editor .se-dialog .se-btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+/* Cancel button in dialogs */
+.sun-editor .se-dialog .se-btn {
+  border-radius: 0.5rem !important;
+  padding: 0.625rem 1.25rem !important;
+  transition: all 0.15s ease;
+}
+
+.sun-editor .se-dialog .se-btn:not(.se-btn-primary):hover {
+  background-color: hsl(var(--accent)) !important;
+}
+
+/* Controller (Link, Image, etc.) */
+.sun-editor .se-controller {
+  background-color: hsl(var(--popover));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.375rem;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.sun-editor .se-controller .se-arrow {
+  border-bottom-color: hsl(var(--border));
+}
+
+.sun-editor .se-controller .link-content,
+.sun-editor .se-controller .image-size-display {
+  color: hsl(var(--foreground));
+  padding: 0.5rem 0.75rem;
+}
+
+.sun-editor .se-controller a {
+  color: hsl(var(--primary));
+}
+
+.sun-editor .se-controller a:hover {
+  color: hsl(var(--primary) / 0.8);
+}
+
+.sun-editor .se-controller .se-btn-group button {
+  color: hsl(var(--foreground));
+}
+
+.sun-editor .se-controller .se-btn-group button:hover {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+/* Resizing module */
+.sun-editor .se-resizing-container {
+  border: 2px solid hsl(var(--primary));
+}
+
+.sun-editor .se-resize-dot {
+  background-color: hsl(var(--primary));
+}
+
+/* Components (images, videos) */
+.sun-editor-editable .se-component {
+  margin: 1rem 0;
+}
+
+.sun-editor-editable .se-component.__se__float-left {
+  margin: 0 1rem 1rem 0;
+}
+
+.sun-editor-editable .se-component.__se__float-right {
+  margin: 0 0 1rem 1rem;
+}
+
+.sun-editor-editable img {
+  border-radius: 0.375rem;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Tooltip - Professional Design */
+.sun-editor .se-tooltip {
+  position: relative;
+}
+
+.sun-editor .se-tooltip .se-tooltip-inner {
+  position: absolute !important;
+  background-color: hsl(var(--popover)) !important;
+  color: hsl(var(--popover-foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 0.5rem !important;
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important;
+  padding: 0.5rem 0.75rem !important;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(4px);
+  pointer-events: none;
+  z-index: 10000;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  overflow: visible !important;
+  white-space: nowrap;
+}
+
+.sun-editor .se-tooltip:hover .se-tooltip-inner {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition-delay: 0.5s;
+}
+
+.sun-editor .se-tooltip .se-tooltip-text {
+  font-size: 0.6875rem !important;
+  white-space: nowrap !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  color: hsl(var(--popover-foreground)) !important;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.4 !important;
+  display: inline !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  position: static !important;
+}
+
+/* Remove any default tooltip arrows and backgrounds */
+.sun-editor .se-tooltip-inner::before,
+.sun-editor .se-tooltip-inner::after,
+.sun-editor .se-tooltip-inner .se-tooltip-text::before,
+.sun-editor .se-tooltip-inner .se-tooltip-text::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* Ensure all child elements are properly contained */
+.sun-editor .se-tooltip-inner * {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  position: static !important;
+}
+
+/* Tooltip positioning refinement */
+.sun-editor .se-tooltip .se-tooltip-inner[style*="bottom"] {
+  transform: translateY(-4px);
+}
+
+.sun-editor .se-tooltip:hover .se-tooltip-inner[style*="bottom"] {
+  transform: translateY(0);
+}
+
+/* Loading */
+.sun-editor .se-loading-box {
+  background-color: hsl(var(--background) / 0.9);
+}
+
+.sun-editor .se-loading-box .se-loading-effect {
+  border-top-color: hsl(var(--primary));
+}
+
+/* Notice (notifications) */
+.sun-editor .se-notice {
+  background-color: hsl(var(--popover));
+  color: hsl(var(--popover-foreground));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.375rem;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+/* Disabled state */
+.sun-editor .se-toolbar button:disabled,
+.sun-editor .se-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Focus states */
+.sun-editor .se-wrapper-inner.se-wrapper-wysiwyg:focus {
+  outline: none;
+}
+
+.sun-editor:focus-within {
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 3px hsl(var(--ring) / 0.1), 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.sun-editor.se-toolbar-sticky .se-toolbar {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  border-bottom: 2px solid hsl(var(--border));
+}
+
+/* Code View Mode */
+.sun-editor .se-wrapper-code {
+  font-size: 0.8125rem !important;
+  line-height: 1.5 !important;
+}
+
+.sun-editor .se-wrapper-code textarea {
+  background-color: hsl(var(--muted)) !important;
+  color: hsl(var(--foreground)) !important;
+  border: 0 !important;
+}
+
+.sun-editor .se-wrapper-code textarea:focus {
+  outline: none !important;
+}
+
+/* Full Screen Mode */
+.sun-editor.se-fullscreen {
+  z-index: 9999 !important;
+}
+
+.sun-editor.se-fullscreen .se-toolbar {
+  box-shadow: 0 2px 4px 0 rgb(0 0 0 / 0.1);
+}
+
+/* Loading State */
+.sun-editor .se-loading-box .se-loading-effect span {
+  background-color: hsl(var(--primary)) !important;
+}
+
+/* Dark mode specific adjustments */
+@media (prefers-color-scheme: dark) {
+  .sun-editor .se-resizing-container {
+    border-color: hsl(var(--primary) / 0.7);
+  }
+  
+  .sun-editor .se-resize-dot {
+    background-color: hsl(var(--primary) / 0.7);
+  }
+}
+
+/* Custom scrollbar for wysiwyg area */
+.sun-editor .se-wrapper-inner.se-wrapper-wysiwyg::-webkit-scrollbar {
+  width: 10px;
+}
+
+.sun-editor .se-wrapper-inner.se-wrapper-wysiwyg::-webkit-scrollbar-track {
+  background-color: hsl(var(--muted) / 0.5);
+}
+
+.sun-editor .se-wrapper-inner.se-wrapper-wysiwyg::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 0.25rem;
+}
+
+.sun-editor .se-wrapper-inner.se-wrapper-wysiwyg::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Character Counter - Hidden */
+.sun-editor .se-character-counter,
+.sun-editor .se-character-counter-wrapper {
+  display: none !important;
+}
+
+/* Dropdown Selects */
+.sun-editor .se-btn-select {
+  color: hsl(var(--foreground)) !important;
+  background-color: hsl(var(--background)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 0.5rem !important;
+  padding: 0.5rem 0.625rem !important;
+  transition: all 0.15s ease;
+  min-width: 90px;
+  max-width: fit-content;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.375rem;
+}
+
+.sun-editor .se-btn-select:hover {
+  background-color: hsl(var(--accent)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-color: hsl(var(--border)) !important;
+  box-shadow: 0 2px 4px 0 rgb(0 0 0 / 0.05);
+  transform: translateY(-1px);
+}
+
+.sun-editor .se-btn-select .txt {
+  color: inherit !important;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+  /* display: inline-block !important;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis; */
+}
+
+/* Dropdown arrow */
+.sun-editor .se-btn-select svg {
+  color: hsl(var(--muted-foreground)) !important;
+  width: 12px !important;
+  height: 12px !important;
+  margin-left: 0;
+  flex-shrink: 0;
+}
+
+/* Ensure dropdown content updates properly */
+/* .sun-editor .se-btn-select .txt::before {
+  display: none;
+}
+
+.sun-editor .se-btn-select .txt::after {
+  display: none;
+} */
+
+/* Resizing bar */
+.sun-editor .se-resizing-bar {
+  background-color: hsl(var(--border)) !important;
+  height: 2px !important;
+}
+
+.sun-editor .se-resizing-bar:hover {
+  background-color: hsl(var(--primary) / 0.5) !important;
+}
+
+/* Sticky Toolbar Enhancement */
+.sun-editor.se-toolbar-sticky {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sun-editor {
+    border-radius: 0.5rem;
+  }
+  
+  .sun-editor .se-toolbar {
+    padding: 0.5rem 0.75rem;
+    gap: 0.125rem;
+  }
+  
+  .sun-editor .se-btn {
+    height: 32px;
+    width: 32px;
+    min-width: 32px;
+    max-width: 32px;
+    padding: 0 !important;
+    margin: 0 1px;
+  }
+  
+  .sun-editor .se-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .sun-editor .se-btn-select {
+    min-width: 80px;
+    padding: 0.375rem 0.5rem !important;
+    font-size: 0.8125rem;
+  }
+  
+  .sun-editor .se-wrapper-inner.se-wrapper-wysiwyg {
+    padding: 1rem;
+  }
+  
+  .sun-editor .se-toolbar .se-btn-module-border {
+    margin: 0 0.25rem 0 0.125rem;
+    padding-right: 0.25rem;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .sun-editor .se-toolbar {
+    display: none !important;
+  }
+  
+  .sun-editor {
+    border: none !important;
+    box-shadow: none !important;
+  }
+  
+  .sun-editor .se-wrapper-inner.se-wrapper-wysiwyg {
+    padding: 0 !important;
+  }
+}
+
+/* ===================================
+   Improvements Applied:
+   - Professional toolbar with gradient background
+   - Improved button states with smooth transitions
+   - Better tooltip styling matching app theme
+   - Enhanced dropdown selects with borders
+   - Proper button grouping and spacing
+   - Refined shadows and hover effects
+   - Focus states with ring effect
+   - Responsive design for mobile
+   - Print-friendly styles
+   =================================== */

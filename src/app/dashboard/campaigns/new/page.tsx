@@ -12,6 +12,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { Editor } from "@/components/v2/editor";
 import { Header } from "@/components/v2/header";
 import { RecipientsSidebar } from "@/components/v2/recipients-sidebar";
+import { SendConfirmationDialog } from "@/components/v2/send-confirmation-dialog";
 import { Form } from "@/components/ui/form";
 import { selectCampaignData, selectCampaignName, selectSelectedMemberIds, setCampaignName } from "@/store/features/campaigns/campaignSlice";
 import { Member } from "@/app/dashboard/members/data/schema";
@@ -33,6 +34,7 @@ export default function NewCampaignPage() {
   const dispatch = useDispatch();
   const [isSaving, setIsSaving] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [showSendConfirmation, setShowSendConfirmation] = useState(false);
 
   // Get authenticated user identity using Refine
   const { data: identity } = useGetIdentity<{ id: string }>();
@@ -91,6 +93,12 @@ export default function NewCampaignPage() {
       return;
     }
 
+    // Wait for members to finish loading
+    if (isMembersLoading) {
+      toast.error("Please wait for members to load");
+      return;
+    }
+
     const values = form.getValues();
     
     if (!values.subject || !values.body) {
@@ -105,73 +113,75 @@ export default function NewCampaignPage() {
 
     setIsSaving(true);
 
-    try {
-      // Create campaign
-      createCampaign(
-        {
-          resource: "email_campaigns",
-          values: {
-            name: campaignName,
-            subject: values.subject,
-            body: values.body,
-            cc: values.cc,
-            bcc: values.bcc,
-            reply_to: values.reply_to,
-            status: "draft",
-            total_recipients: selectedMemberIds.length,
-            user_id: userId,
-            user_token_id: selectedAccount.id,
-          },
+    // Create campaign
+    createCampaign(
+      {
+        resource: "email_campaigns",
+        values: {
+          name: campaignName,
+          subject: values.subject,
+          body: values.body,
+          cc: values.cc,
+          bcc: values.bcc,
+          reply_to: values.reply_to,
+          status: "draft",
+          total_recipients: selectedMemberIds.length,
+          user_id: userId,
+          user_token_id: selectedAccount.id,
         },
-        {
-          onSuccess: (data) => {
-            const campaignId = data.data.id;
+      },
+      {
+        onSuccess: (data) => {
+          const campaignId = data.data.id;
 
-            // Create recipients with email and name
-            const recipientsData = selectedMemberIds.map((memberId) => {
+          // Create recipients with email and name, filter out invalid ones
+          const recipientsData = selectedMemberIds
+            .map((memberId) => {
               const member = members.find((m: Member) => m.id === memberId);
+              if (!member || !member.email) {
+                console.warn(`Skipping member ${memberId} - no email found`);
+                return null;
+              }
               return {
                 campaign_id: campaignId,
                 member_id: memberId,
-                recipient_email: member?.email || '',
-                recipient_name: member?.full_name || `${member?.first_name || ''} ${member?.last_name || ''}`.trim() || '',
+                recipient_email: member.email,
+                recipient_name: member.full_name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || '',
                 status: "pending",
               };
-            });
+            })
+            .filter((recipient): recipient is NonNullable<typeof recipient> => recipient !== null);
 
-            // Batch insert all recipients at once
-            createManyRecipients(
-              {
-                resource: "campaign_recipients",
-                values: recipientsData,
+          // Batch insert all recipients at once
+          createManyRecipients(
+            {
+              resource: "campaign_recipients",
+              values: recipientsData,
+            },
+            {
+              onSuccess: () => {
+                setIsSaving(false);
+                toast.success("Campaign saved as draft");
+                router.push("/dashboard/campaigns");
               },
-              {
-                onSuccess: () => {
-                  toast.success("Campaign saved as draft");
-                  router.push("/dashboard/campaigns");
-                },
-                onError: (error) => {
-                  console.error("Error creating recipients:", error);
-                  toast.error("Campaign saved but failed to add recipients");
-                },
-              }
-            );
-          },
-          onError: (error) => {
-            console.error("Error saving campaign:", error);
-            toast.error("Failed to save campaign");
-          },
-        }
-      );
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("An error occurred");
-    } finally {
-      setIsSaving(false);
-    }
+              onError: (error) => {
+                setIsSaving(false);
+                console.error("Error creating recipients:", error);
+                toast.error("Campaign saved but failed to add recipients");
+              },
+            }
+          );
+        },
+        onError: (error) => {
+          setIsSaving(false);
+          console.error("Error saving campaign:", error);
+          toast.error("Failed to save campaign");
+        },
+      }
+    );
   };
 
-  // Send campaign
+  // Validate and show confirmation dialog before sending
   const handleSendCampaign = async () => {
     if (!userId) {
       toast.error("User not authenticated. Please log in.");
@@ -180,6 +190,12 @@ export default function NewCampaignPage() {
 
     if (!selectedAccount?.id) {
       toast.error("Please select a Microsoft account first");
+      return;
+    }
+
+    // Wait for members to finish loading
+    if (isMembersLoading) {
+      toast.error("Please wait for members to load");
       return;
     }
 
@@ -195,73 +211,87 @@ export default function NewCampaignPage() {
       return;
     }
 
+    // Show confirmation dialog
+    setShowSendConfirmation(true);
+  };
+
+  // Execute the actual send after confirmation
+  const executeSendCampaign = async () => {
+    if (!userId || !selectedAccount?.id) {
+      return;
+    }
+
+    const values = form.getValues();
+
     setIsSending(true);
 
-    try {
-      // Create campaign with 'sending' status
-      createCampaign(
-        {
-          resource: "email_campaigns",
-          values: {
-            name: campaignName,
-            subject: values.subject,
-            body: values.body,
-            cc: values.cc,
-            bcc: values.bcc,
-            reply_to: values.reply_to,
-            status: "queued",
-            started_at: new Date().toISOString(),
-            total_recipients: selectedMemberIds.length,
-            user_id: userId,
-            user_token_id: selectedAccount.id,
-          },
+    // Create campaign with 'queued' status
+    createCampaign(
+      {
+        resource: "email_campaigns",
+        values: {
+          name: campaignName,
+          subject: values.subject,
+          body: values.body,
+          cc: values.cc,
+          bcc: values.bcc,
+          reply_to: values.reply_to,
+          status: "queued",
+          started_at: new Date().toISOString(),
+          total_recipients: selectedMemberIds.length,
+          user_id: userId,
+          user_token_id: selectedAccount.id,
         },
-        {
-          onSuccess: (data) => {
-            const campaignId = data.data.id;
+      },
+      {
+        onSuccess: (data) => {
+          const campaignId = data.data.id;
 
-            // Create recipients with email and name
-            const recipientsData = selectedMemberIds.map((memberId) => {
+          // Create recipients with email and name, filter out invalid ones
+          const recipientsData = selectedMemberIds
+            .map((memberId) => {
               const member = members.find((m: Member) => m.id === memberId);
+              if (!member || !member.email) {
+                console.warn(`Skipping member ${memberId} - no email found`);
+                return null;
+              }
               return {
                 campaign_id: campaignId,
                 member_id: memberId,
-                recipient_email: member?.email || '',
-                recipient_name: member?.full_name || `${member?.first_name || ''} ${member?.last_name || ''}`.trim() || '',
+                recipient_email: member.email,
+                recipient_name: member.full_name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || '',
                 status: "pending",
               };
-            });
+            })
+            .filter((recipient): recipient is NonNullable<typeof recipient> => recipient !== null);
 
-            // Batch insert all recipients at once
-            createManyRecipients(
-              {
-                resource: "campaign_recipients",
-                values: recipientsData,
+          // Batch insert all recipients at once
+          createManyRecipients(
+            {
+              resource: "campaign_recipients",
+              values: recipientsData,
+            },
+            {
+              onSuccess: () => {
+                setIsSending(false);
+                toast.success("Campaign is being sent!");
+                router.push("/dashboard/campaigns");
               },
-              {
-                onSuccess: () => {
-                  toast.success("Campaign is being sent!");
-                  router.push("/dashboard/campaigns");
-                },
-                onError: (error) => {
-                  console.error("Error creating recipients:", error);
-                  toast.error("Campaign created but failed to add recipients");
-                },
-              }
-            );
-          },
-          onError: (error) => {
-            console.error("Error sending campaign:", error);
-            toast.error("Failed to send campaign");
-          },
-        }
-      );
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("An error occurred");
-    } finally {
-      setIsSending(false);
-    }
+              onError: (error) => {
+                setIsSending(false);
+                console.error("Error creating recipients:", error);
+                toast.error("Campaign created but failed to add recipients");
+              },
+            }
+          );
+        },
+        onError: (error) => {
+          setIsSending(false);
+          console.error("Error sending campaign:", error);
+          toast.error("Failed to send campaign");
+        },
+      }
+    );
   };
 
   // Handle preview
@@ -292,6 +322,16 @@ export default function NewCampaignPage() {
           <RecipientsSidebar members={members} isLoading={isMembersLoading} />
         </main>
       </form>
+
+      <SendConfirmationDialog
+        open={showSendConfirmation}
+        onOpenChange={setShowSendConfirmation}
+        onConfirm={executeSendCampaign}
+        campaignName={campaignName}
+        subject={form.watch("subject")}
+        recipientCount={selectedMemberIds.length}
+        isLoading={isSending}
+      />
     </Form>
   );
 }

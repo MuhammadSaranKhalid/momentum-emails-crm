@@ -80,7 +80,7 @@ export function V2Sidebar() {
                 href="/dashboard/members"
               >
                 <Users className="h-5 w-5" />
-                <span>Members</span>
+                <span>Agents</span>
               </Link>
               <Link
                 className={cn(

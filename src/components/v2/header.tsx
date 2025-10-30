@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, Save, Send, Loader2, Pencil, Check, X } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
+import { Eye, Save, Send, Pencil, Check, X } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
 interface HeaderProps {
@@ -125,7 +126,7 @@ export function Header({
           disabled={isSaving || isSending}
         >
           {isSaving ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <Spinner className="mr-2 h-4 w-4" />
           ) : (
             <Save className="mr-2 h-4 w-4" />
           )}
@@ -137,7 +138,7 @@ export function Header({
           disabled={isSaving || isSending}
         >
           {isSending ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <Spinner className="mr-2 h-4 w-4" />
           ) : (
             <Send className="mr-2 h-4 w-4" />
           )}
