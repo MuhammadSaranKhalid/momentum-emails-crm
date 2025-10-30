@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { Eye, Save, Send, Pencil, Check, X } from "lucide-react";
+import { Save, Send, Pencil, Check, X } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
 interface HeaderProps {
@@ -17,7 +17,6 @@ interface HeaderProps {
 export function Header({ 
   campaignName,
   onCampaignNameChange,
-  onPreview, 
   onSaveDraft, 
   onSendCampaign,
   isSaving = false,

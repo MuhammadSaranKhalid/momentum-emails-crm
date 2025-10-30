@@ -88,6 +88,17 @@
   box-sizing: border-box;
 }
 
+/* Exclude dropdown buttons from fixed width - they need to show text */
+.sun-editor .se-btn-select,
+.sun-editor .se-btn[data-command="font"],
+.sun-editor .se-btn[data-command="fontSize"],
+.sun-editor .se-btn[data-command="formatBlock"] {
+  width: auto !important;
+  min-width: 90px !important;
+  max-width: 140px !important;
+  justify-content: space-between !important;
+}
+
 .sun-editor .se-btn svg {
   width: 18px;
   height: 18px;
@@ -141,12 +152,12 @@
   color: hsl(var(--foreground));
 }
 
-/* Submenu & Dropdowns */
+/* Submenu & Dropdowns - Force solid white background */
 .sun-editor .se-menu-list,
 .sun-editor .se-list-layer,
 .sun-editor .se-submenu {
-  background: hsl(var(--popover)) !important;
-  background-color: hsl(var(--popover)) !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
   color: hsl(var(--popover-foreground)) !important;
   border: 1px solid hsl(var(--border)) !important;
   border-radius: 0.5rem !important;
@@ -161,23 +172,26 @@
 }
 
 .sun-editor .se-list-layer .se-list-inner {
-  background: hsl(var(--popover)) !important;
-  background-color: hsl(var(--popover)) !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
   max-height: 400px;
   overflow-y: auto;
   padding: 0.125rem;
+  opacity: 1 !important;
 }
 
 .sun-editor .se-list-layer .se-list-inner ul {
-  background: hsl(var(--popover)) !important;
-  background-color: hsl(var(--popover)) !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  opacity: 1 !important;
 }
 
 .sun-editor .se-list-layer .se-list-inner ul.se-list-basic {
-  background: hsl(var(--popover)) !important;
-  background-color: hsl(var(--popover)) !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
   margin: 0;
   padding: 0;
+  opacity: 1 !important;
 }
 
 .sun-editor .se-list-layer .se-list-inner::-webkit-scrollbar {
@@ -223,20 +237,90 @@
   transform: scale(0.98);
 }
 
-/* Ensure all dropdown wrappers are fully opaque */
-.sun-editor .se-list-layer,
-.sun-editor .se-list-layer * {
+/* Ensure all dropdown wrappers are fully opaque and have white background */
+.sun-editor .se-list-layer {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  opacity: 1 !important;
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+}
+
+/* All child elements should have opacity 1 */
+/* Note: Only container divs get white bg, list items stay transparent for hover */
+.sun-editor .se-list-layer li,
+.sun-editor .se-list-layer button,
+.sun-editor .se-list-layer span {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  opacity: 1 !important;
 }
 
 .sun-editor .se-list-layer > div,
 .sun-editor .se-submenu > div {
-  background: hsl(var(--popover)) !important;
-  background-color: hsl(var(--popover)) !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  opacity: 1 !important;
 }
 
-/* Variables submenu custom styling */
+/* Force all dropdown containers to have white background */
+.sun-editor .se-menu-list,
+.sun-editor .se-menu-list > div,
+.sun-editor .se-list-layer,
+.sun-editor .se-list-layer > div,
+.sun-editor .se-list-layer .se-list-inner,
+.sun-editor .se-list-layer .se-list-font-size,
+.sun-editor .se-list-layer .se-list-font-family,
+.sun-editor .se-list-layer .se-list-heading,
+.sun-editor .se-submenu,
+.sun-editor .se-submenu > div {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+/* Ensure list items themselves are transparent (for hover effect) */
+/* but their container parents remain white */
+
+/* Variables submenu custom styling - Force solid white background */
+.sun-editor .se-submenu.se-variables-submenu {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  opacity: 1 !important;
+  border: 1px solid hsl(var(--border)) !important;
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important;
+}
+
+.sun-editor .se-submenu.se-variables-submenu * {
+  opacity: 1 !important;
+}
+
+.sun-editor .se-submenu.se-variables-submenu .se-list-inner,
+.sun-editor .se-submenu.se-variables-submenu .se-list-inner * {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  opacity: 1 !important;
+}
+
+.sun-editor .se-submenu.se-variables-submenu .se-list-basic,
+.sun-editor .se-submenu.se-variables-submenu .se-list-basic * {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  opacity: 1 !important;
+}
+
+.sun-editor .se-submenu.se-variables-submenu .se-list-basic li {
+  background-color: transparent !important;
+}
+
+.sun-editor .se-submenu.se-variables-submenu .se-list-basic li button {
+  background-color: transparent !important;
+}
+
+.sun-editor .se-submenu.se-variables-submenu .se-list-basic li button:hover {
+  background-color: hsl(var(--accent)) !important;
+}
+
 .sun-editor .se-list-layer .se-list-title {
   color: hsl(var(--muted-foreground)) !important;
   background-color: transparent !important;
@@ -738,7 +822,7 @@
   display: none !important;
 }
 
-/* Dropdown Selects */
+/* Dropdown Selects - Font, Size, Format buttons */
 .sun-editor .se-btn-select {
   color: hsl(var(--foreground)) !important;
   background-color: hsl(var(--background)) !important;
@@ -746,8 +830,10 @@
   border-radius: 0.5rem !important;
   padding: 0.5rem 0.625rem !important;
   transition: all 0.15s ease;
-  min-width: 90px;
-  max-width: fit-content;
+  min-width: 90px !important;
+  max-width: fit-content !important;
+  width: auto !important;
+  height: 36px !important;
   font-size: 0.875rem;
   font-weight: 500;
   display: inline-flex !important;
@@ -769,19 +855,61 @@
   font-weight: 500;
   white-space: nowrap;
   flex-shrink: 0;
-  /* display: inline-block !important;
+  display: inline-block !important;
   max-width: 120px;
   overflow: hidden;
-  text-overflow: ellipsis; */
+  text-overflow: ellipsis;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Ensure text is visible in dropdown buttons */
+.sun-editor .se-btn[data-command="font"] .txt,
+.sun-editor .se-btn[data-command="fontSize"] .txt,
+.sun-editor .se-btn[data-command="formatBlock"] .txt,
+.sun-editor .se-btn-select .txt {
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 /* Dropdown arrow */
-.sun-editor .se-btn-select svg {
+.sun-editor .se-btn-select svg,
+.sun-editor .se-btn[data-command="font"] svg,
+.sun-editor .se-btn[data-command="fontSize"] svg,
+.sun-editor .se-btn[data-command="formatBlock"] svg {
   color: hsl(var(--muted-foreground)) !important;
   width: 12px !important;
   height: 12px !important;
-  margin-left: 0;
+  margin-left: 0.25rem;
   flex-shrink: 0;
+}
+
+/* Specific styling for font, fontSize, and formatBlock buttons to show selected values */
+.sun-editor .se-btn[data-command="font"],
+.sun-editor .se-btn[data-command="fontSize"],
+.sun-editor .se-btn[data-command="formatBlock"] {
+  min-width: 90px !important;
+  width: auto !important;
+  max-width: 140px !important;
+  padding: 0.5rem 0.625rem !important;
+  justify-content: space-between !important;
+}
+
+.sun-editor .se-btn[data-command="font"] .txt,
+.sun-editor .se-btn[data-command="fontSize"] .txt,
+.sun-editor .se-btn[data-command="formatBlock"] .txt {
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: inherit !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100px !important;
+  margin-right: 0.25rem;
 }
 
 /* Ensure dropdown content updates properly */

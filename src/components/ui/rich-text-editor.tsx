@@ -1,6 +1,6 @@
 "use client";
 
-import React, { forwardRef } from "react";
+import React, { forwardRef, useEffect, useRef } from "react";
 import SunEditor from "suneditor-react";
 import plugins from "suneditor/src/plugins";
 import "suneditor/dist/css/suneditor.min.css";
@@ -9,13 +9,24 @@ import "./rich-text-editor.css";
 interface RichTextEditorProps {
   value?: string;
   onChange?: (content: string) => void;
+  onBlur?: (event: Event, editorContents: string) => void;
   placeholder?: string;
   setOptions?: Record<string, unknown>;
+  defaultValue?: string;
+  width?: string;
+  height?: string;
+  disable?: boolean;
+  hide?: boolean;
+  hideToolbar?: boolean;
+  disableToolbar?: boolean;
+  autoFocus?: boolean;
 }
 
 export interface RichTextEditorRef {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getEditor: () => any;
+  getContents: () => string;
+  setContents: (contents: string) => void;
 }
 
 // Custom Variables Plugin for SunEditor
@@ -66,9 +77,10 @@ const variablesPlugin: any = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setSubmenu: function (core: any) {
     const listDiv = core.util.createElement("DIV");
-    listDiv.className = "se-submenu se-list-layer";
-    listDiv.innerHTML = `<div class="se-list-inner se-list-font-size" style="max-height: 400px; overflow-y: auto;">
-        <ul class="se-list-basic">
+    listDiv.className = "se-submenu se-list-layer se-variables-submenu";
+    listDiv.style.cssText = "background-color: #ffffff !important; opacity: 1 !important;";
+    listDiv.innerHTML = `<div class="se-list-inner se-list-font-size" style="max-height: 400px; overflow-y: auto; background-color: #ffffff !important; opacity: 1 !important;">
+        <ul class="se-list-basic" style="background-color: #ffffff !important; opacity: 1 !important;">
           <li class="se-list-title" style="padding: 8px 12px; font-weight: 600; font-size: 11px; color: #666;">RECIPIENT VARIABLES</li>
           <li><button type="button" class="se-btn-list" data-value="{{first_name}}" title="Recipient's first name">
             <span style="display: flex; align-items: center; gap: 8px;">
@@ -138,18 +150,99 @@ const variablesPlugin: any = {
 export const RichTextEditor = forwardRef<
   RichTextEditorRef,
   RichTextEditorProps
->(({ value, onChange, placeholder, setOptions }, ref) => {
+>(({ 
+  value, 
+  onChange, 
+  onBlur, 
+  placeholder, 
+  setOptions,
+  defaultValue,
+  width = "100%",
+  height = "auto",
+  disable = false,
+  hide = false,
+  hideToolbar = false,
+  disableToolbar = false,
+  autoFocus = false,
+}, ref) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let editorInstance: any = null;
+  const editorInstanceRef = useRef<any>(null);
+  const previousValueRef = useRef<string | undefined>(value);
+
+  // Update editor content when prop changes (equivalent to componentDidUpdate)
+  useEffect(() => {
+    if (value !== previousValueRef.current && editorInstanceRef.current) {
+      previousValueRef.current = value;
+      
+      // Only update if content is actually different to avoid unnecessary updates
+      if (typeof editorInstanceRef.current.getContents === 'function' && 
+          typeof editorInstanceRef.current.setContents === 'function') {
+        try {
+          const currentContent = editorInstanceRef.current.getContents(true);
+          if (currentContent !== (value || "")) {
+            editorInstanceRef.current.setContents(value || "", false);
+            // Reset history after external content update (like componentDidUpdate example)
+            if (editorInstanceRef.current.core?.history?.reset) {
+              try {
+                editorInstanceRef.current.core.history.reset(true);
+              } catch {
+                // Ignore history reset errors
+              }
+            }
+          }
+        } catch (error) {
+          // Ignore errors if editor is not ready
+          console.warn("Error updating editor content:", error);
+        }
+      }
+    }
+  }, [value]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getSunEditorInstance = (sunEditor: any) => {
-    editorInstance = sunEditor;
+    if (sunEditor) {
+      editorInstanceRef.current = sunEditor;
+    }
+  };
+
+  // Handle onBlur event properly according to suneditor-react docs
+  // onBlur receives (event, editorContents) parameters
+  const handleBlur = (event: Event, editorContents: string) => {
+    if (onBlur && typeof onBlur === 'function') {
+      onBlur(event, editorContents);
+    }
+  };
+
+  const handleChange = (content: string) => {
+    previousValueRef.current = content;
+    if (onChange) {
+      onChange(content);
+    }
   };
 
   React.useImperativeHandle(ref, () => ({
     getEditor: () => {
-      return editorInstance;
+      return editorInstanceRef.current;
+    },
+    getContents: () => {
+      if (editorInstanceRef.current && typeof editorInstanceRef.current.getContents === 'function') {
+        try {
+          return editorInstanceRef.current.getContents(true) || "";
+        } catch (error) {
+          console.warn("Error getting editor contents:", error);
+          return "";
+        }
+      }
+      return "";
+    },
+    setContents: (contents: string) => {
+      if (editorInstanceRef.current && typeof editorInstanceRef.current.setContents === 'function') {
+        try {
+          editorInstanceRef.current.setContents(contents);
+        } catch (error) {
+          console.warn("Error setting editor contents:", error);
+        }
+      }
     },
   }));
 
@@ -158,52 +251,61 @@ export const RichTextEditor = forwardRef<
       <SunEditor
         getSunEditorInstance={getSunEditorInstance}
         setContents={value}
-        onChange={onChange}
+        defaultValue={defaultValue}
+        onChange={handleChange}
+        onBlur={handleBlur}
         placeholder={placeholder}
-         setOptions={{
-           plugins: { ...plugins, variablesPlugin },
-           buttonList: [
-             ["undo", "redo"],
-             ["font", "fontSize", "formatBlock"],
-             [
-               "bold",
-               "underline",
-               "italic",
-               "strike",
-               "subscript",
-               "superscript",
-             ],
-             ["fontColor", "hiliteColor", "removeFormat"],
-             ["outdent", "indent"],
-             ["align", "horizontalRule", "list", "lineHeight"],
-             ["table", "link", "image"],
-             ["fullScreen", "showBlocks", "codeView"],
-             ["variables"], // Our custom plugin - separated
-           ],
-           minHeight: "400px",
-           height: "auto",
-          //  defaultStyle:
-          //    "font-family: inherit; font-size: 15px; line-height: 1.6;",
-           charCounter: false, // Disabled character counter
-          //  font: [
-          //    "Arial",
-          //    "Calibri",
-          //    "Comic Sans MS",
-          //    "Courier New",
-          //    "Georgia",
-          //    "Impact",
-          //    "Lucida Console",
-          //    "Tahoma",
-          //    "Times New Roman",
-          //    "Trebuchet MS",
-          //    "Verdana",
-          //  ],
-          //  fontSize: [
-          //    8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72,
-          //  ],
-          //  formats: ["p", "div", "h1", "h2", "h3", "h4", "h5", "h6"],
-           ...setOptions,
-         }}
+        width={width}
+        height={height}
+        disable={disable}
+        hide={hide}
+        hideToolbar={hideToolbar}
+        disableToolbar={disableToolbar}
+        autoFocus={autoFocus}
+        setOptions={{
+          plugins: { ...plugins, variablesPlugin },
+          buttonList: [
+            ["undo", "redo"],
+            ["font", "fontSize", "formatBlock"],
+            [
+              "bold",
+              "underline",
+              "italic",
+              "strike",
+              "subscript",
+              "superscript",
+            ],
+            ["fontColor", "hiliteColor", "removeFormat"],
+            ["outdent", "indent"],
+            ["align", "horizontalRule", "list", "lineHeight"],
+            ["table", "link", "image"],
+            ["fullScreen", "showBlocks", "codeView"],
+            ["variables"], // Our custom plugin
+          ],
+          minHeight: "400px",
+          defaultStyle: "font-family: inherit; font-size: 15px; line-height: 1.6;",
+          charCounter: false,
+          font: [
+            "Arial",
+            "Calibri",
+            "Comic Sans MS",
+            "Courier New",
+            "Georgia",
+            "Helvetica Neue",
+            "Impact",
+            "Lucida Console",
+            "Tahoma",
+            "Times New Roman",
+            "Trebuchet MS",
+            "Verdana",
+          ],
+          fontSize: [
+            8, 9, 10, 11, 12, 14, 15, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72,
+          ],
+          fontSizeUnit: "px",
+          formats: ["p", "div", "h1", "h2", "h3", "h4", "h5", "h6"],
+          ...setOptions,
+        }}
       />
     </div>
   );
