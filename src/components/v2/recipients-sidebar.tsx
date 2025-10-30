@@ -303,7 +303,7 @@ export function RecipientsSidebar({ members, isLoading }: RecipientsSidebarProps
           </div>
         )}
       </div>
-      
+
       {/* Scrollable Members List */}
       <div className="flex flex-col flex-1 min-h-0 px-4 pb-4">
         <div className="flex items-center justify-between py-2 border-t shrink-0">
