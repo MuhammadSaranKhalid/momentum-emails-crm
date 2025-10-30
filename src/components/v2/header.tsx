@@ -110,7 +110,7 @@ export function Header({
         )}
       </div>
       <div className="flex items-center gap-2">
-        <Button
+        {/* <Button
           type="button"
           variant="outline"
           onClick={onPreview}
@@ -118,7 +118,7 @@ export function Header({
         >
           <Eye className="mr-2 h-4 w-4" />
           Preview
-        </Button>
+        </Button> */}
         <Button
           type="button"
           variant="outline"
