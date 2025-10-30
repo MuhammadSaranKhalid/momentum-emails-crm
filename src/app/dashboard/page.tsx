@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Send, Eye, MousePointerClick, UserMinus, Mail, Inbox as InboxIcon } from 'lucide-react';
+import { Send, Eye, MousePointerClick, Mail, Inbox as InboxIcon, Megaphone } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -30,38 +30,76 @@ export default function DashboardOverviewPage() {
   const [isLoadingInbox, setIsLoadingInbox] = React.useState(false);
   const [isLoadingSent, setIsLoadingSent] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [campaignsExecuted, setCampaignsExecuted] = React.useState<number>(0);
+  const [emailsSent, setEmailsSent] = React.useState<number>(0);
+  const [isLoadingStats, setIsLoadingStats] = React.useState(true);
   
   const selectedAccount = useSelector((state: RootState) => state.accounts.selectedAccount);
 
+  // Fetch dashboard stats
+  const fetchDashboardStats = React.useCallback(async () => {
+    setIsLoadingStats(true);
+    try {
+      const response = await fetch('/api/dashboard/stats');
+      if (response.ok) {
+        const data = await response.json();
+        setCampaignsExecuted(data.campaignsExecuted || 0);
+        setEmailsSent(data.emailsSent || 0);
+      } else {
+        console.error('Failed to fetch dashboard stats');
+      }
+    } catch (err) {
+      console.error('Error fetching dashboard stats:', err);
+    } finally {
+      setIsLoadingStats(false);
+    }
+  }, []);
+
+  // Fetch stats on mount
+  React.useEffect(() => {
+    fetchDashboardStats();
+  }, [fetchDashboardStats]);
+
+  // Format large numbers
+  const formatNumber = (num: number): string => {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    }
+    if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toString();
+  };
+
   const stats = [
     {
-      title: 'Emails Sent',
-      value: '12,450',
-      icon: Send,
+      title: 'Campaigns Executed',
+      value: isLoadingStats ? '...' : formatNumber(campaignsExecuted),
+      icon: Megaphone,
       iconBg: 'bg-primary/10',
       iconColor: 'text-primary',
     },
     {
-      title: 'Open Rate',
-      value: '23.5%',
-      icon: Eye,
-      iconBg: 'bg-green-500/10',
-      iconColor: 'text-green-600 dark:text-green-500',
-    },
-    {
-      title: 'Click-through',
-      value: '4.8%',
-      icon: MousePointerClick,
+      title: 'Emails Sent',
+      value: isLoadingStats ? '...' : formatNumber(emailsSent),
+      icon: Send,
       iconBg: 'bg-blue-500/10',
       iconColor: 'text-blue-600 dark:text-blue-500',
     },
-    {
-      title: 'Unsubscribes',
-      value: '1.2%',
-      icon: UserMinus,
-      iconBg: 'bg-orange-500/10',
-      iconColor: 'text-orange-600 dark:text-orange-500',
-    },
+    // {
+    //   title: 'Open Rate',
+    //   value: '23.5%',
+    //   icon: Eye,
+    //   iconBg: 'bg-green-500/10',
+    //   iconColor: 'text-green-600 dark:text-green-500',
+    // },
+    // {
+    //   title: 'Click-through',
+    //   value: '4.8%',
+    //   icon: MousePointerClick,
+    //   iconBg: 'bg-purple-500/10',
+    //   iconColor: 'text-purple-600 dark:text-purple-500',
+    // },
   ];
 
   // Fetch inbox emails
