@@ -155,8 +155,8 @@ export function Editor({ form }: EditorProps) {
     }
   };
   return (
-    <div className="flex flex-1 flex-col bg-neutral-light dark:bg-neutral-dark overflow-hidden">
-      <ScrollArea className="h-0 flex-1">
+    <div className="flex flex-1 flex-col bg-neutral-light dark:bg-neutral-dark">
+      <ScrollArea className="h-full w-full">
         <div className="p-6 space-y-4">
           <FormField
             control={form.control}

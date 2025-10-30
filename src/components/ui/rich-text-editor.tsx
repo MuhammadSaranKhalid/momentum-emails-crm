@@ -182,26 +182,26 @@ export const RichTextEditor = forwardRef<
            ],
            minHeight: "400px",
            height: "auto",
-           defaultStyle:
-             "font-family: inherit; font-size: 15px; line-height: 1.6;",
+          //  defaultStyle:
+          //    "font-family: inherit; font-size: 15px; line-height: 1.6;",
            charCounter: false, // Disabled character counter
-           font: [
-             "Arial",
-             "Calibri",
-             "Comic Sans MS",
-             "Courier New",
-             "Georgia",
-             "Impact",
-             "Lucida Console",
-             "Tahoma",
-             "Times New Roman",
-             "Trebuchet MS",
-             "Verdana",
-           ],
-           fontSize: [
-             8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72,
-           ],
-           formats: ["p", "div", "h1", "h2", "h3", "h4", "h5", "h6"],
+          //  font: [
+          //    "Arial",
+          //    "Calibri",
+          //    "Comic Sans MS",
+          //    "Courier New",
+          //    "Georgia",
+          //    "Impact",
+          //    "Lucida Console",
+          //    "Tahoma",
+          //    "Times New Roman",
+          //    "Trebuchet MS",
+          //    "Verdana",
+          //  ],
+          //  fontSize: [
+          //    8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72,
+          //  ],
+          //  formats: ["p", "div", "h1", "h2", "h3", "h4", "h5", "h6"],
            ...setOptions,
          }}
       />

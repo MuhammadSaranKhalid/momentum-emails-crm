@@ -319,7 +319,8 @@ export function RecipientsSidebar({ members, isLoading }: RecipientsSidebarProps
           </span>
         </div>
         
-        <ScrollArea className="h-0 flex-1 mt-2">
+        <div className="flex-1 min-h-0 mt-2">
+          <ScrollArea className="h-full w-full">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-8 gap-3">
               <Spinner className="h-6 w-6" />
@@ -357,7 +358,8 @@ export function RecipientsSidebar({ members, isLoading }: RecipientsSidebarProps
               ))}
             </div>
           )}
-        </ScrollArea>
+          </ScrollArea>
+        </div>
       </div>
     </aside>
   );

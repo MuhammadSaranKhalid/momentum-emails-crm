@@ -306,22 +306,29 @@ export default function NewCampaignPage() {
   };
 
   return (
-    <Form {...form}>
-      <form className="flex flex-1 flex-col overflow-hidden">
-        <Header 
-          campaignName={campaignName}
-          onCampaignNameChange={handleCampaignNameChange}
-          onPreview={handlePreview}
-          onSaveDraft={handleSaveDraft}
-          onSendCampaign={handleSendCampaign}
-          isSaving={isSaving}
-          isSending={isSending}
-        />
-        <main className="flex flex-1 overflow-hidden min-h-0">
-          <Editor form={form} />
-          <RecipientsSidebar members={members} isLoading={isMembersLoading} />
-        </main>
-      </form>
+    <div className="flex flex-col h-full">
+      <Form {...form}>
+        <form className="flex flex-col h-full">
+          {/* Fixed Header - stays at top */}
+          <div className="shrink-0">
+            <Header 
+              campaignName={campaignName}
+              onCampaignNameChange={handleCampaignNameChange}
+              onPreview={handlePreview}
+              onSaveDraft={handleSaveDraft}
+              onSendCampaign={handleSendCampaign}
+              isSaving={isSaving}
+              isSending={isSending}
+            />
+          </div>
+
+          {/* Scrollable Content Area - Editor and Recipients */}
+          <main className="flex flex-1 min-h-0">
+            <Editor form={form} />
+            <RecipientsSidebar members={members} isLoading={isMembersLoading} />
+          </main>
+        </form>
+      </Form>
 
       <SendConfirmationDialog
         open={showSendConfirmation}
@@ -332,7 +339,8 @@ export default function NewCampaignPage() {
         recipientCount={selectedMemberIds.length}
         isLoading={isSending}
       />
-    </Form>
+    </div>
   );
 }
+
 
