@@ -108,8 +108,8 @@ export function RecipientsSidebar({
     members.every((m: Member) => selectedMemberIds.includes(m.id));
 
   return (
-    <aside className="flex w-96 flex-col border-l bg-card h-full shrink-0 overflow-hidden">
-      <div className="flex flex-col p-4 space-y-4 shrink-0">
+    <aside className="flex w-96 flex-col border-l bg-card shrink-0 h-full overflow-hidden">
+      <div className="flex flex-col p-4 space-y-4 border-b shrink-0 max-h-[40%] overflow-y-auto scrollbar-thin">
         <h2 className="text-lg font-semibold">
           Recipients
         </h2>
@@ -295,8 +295,8 @@ export function RecipientsSidebar({
       </div>
 
       {/* Scrollable Members List */}
-      <div className="flex flex-col flex-1 min-h-0 px-4">
-        <div className="flex items-center justify-between py-2 border-t shrink-0">
+      <div className="flex flex-col flex-1 min-h-0">
+        <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
           <Label className="flex items-center space-x-3 cursor-pointer">
             <Checkbox 
               checked={isAllSelected}
@@ -309,9 +309,8 @@ export function RecipientsSidebar({
           </span>
         </div>
         
-        <div className="flex-1 min-h-0 mt-2 pb-4">
-          <ScrollArea className="h-full">
-            <div className="pr-2">
+        <ScrollArea className="h-[calc(100vh-24rem)]">
+          <div className="px-4 py-2">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-8 gap-3">
                 <Spinner className="h-6 w-6" />
@@ -349,9 +348,8 @@ export function RecipientsSidebar({
                 ))}
               </div>
             )}
-            </div>
-          </ScrollArea>
-        </div>
+          </div>
+        </ScrollArea>
       </div>
     </aside>
   );

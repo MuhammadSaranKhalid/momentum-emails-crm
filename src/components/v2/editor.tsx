@@ -5,7 +5,7 @@ import { UseFormReturn } from "react-hook-form";
 import { useDispatch } from "react-redux";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { X } from "lucide-react";
+import { X, File, FileText, FileImage, FileVideo, FileAudio, FileSpreadsheet, FileArchive, FileCode } from "lucide-react";
 import {
   FormField,
   FormItem,
@@ -57,6 +57,49 @@ export function Editor({ form, attachments, onAddAttachment, onRemoveAttachment 
   const [ccInput, setCcInput] = useState("");
   const [bccInput, setBccInput] = useState("");
   const [activeTab, setActiveTab] = useState<"editor" | "templates">("editor");
+
+  // Get file icon based on file type
+  const getFileIcon = (fileName: string, fileType: string) => {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    
+    // Image files
+    if (fileType.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'bmp'].includes(extension || '')) {
+      return <FileImage className="h-4 w-4 text-blue-500" />;
+    }
+    
+    // Video files
+    if (fileType.startsWith('video/') || ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'].includes(extension || '')) {
+      return <FileVideo className="h-4 w-4 text-purple-500" />;
+    }
+    
+    // Audio files
+    if (fileType.startsWith('audio/') || ['mp3', 'wav', 'ogg', 'flac', 'aac'].includes(extension || '')) {
+      return <FileAudio className="h-4 w-4 text-pink-500" />;
+    }
+    
+    // Document files
+    if (['pdf', 'doc', 'docx', 'txt', 'rtf', 'odt'].includes(extension || '')) {
+      return <FileText className="h-4 w-4 text-red-500" />;
+    }
+    
+    // Spreadsheet files
+    if (['xls', 'xlsx', 'csv', 'ods'].includes(extension || '')) {
+      return <FileSpreadsheet className="h-4 w-4 text-green-500" />;
+    }
+    
+    // Archive files
+    if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2'].includes(extension || '')) {
+      return <FileArchive className="h-4 w-4 text-yellow-500" />;
+    }
+    
+    // Code files
+    if (['js', 'jsx', 'ts', 'tsx', 'py', 'java', 'cpp', 'c', 'html', 'css', 'json', 'xml', 'sql', 'md', 'yml', 'yaml'].includes(extension || '')) {
+      return <FileCode className="h-4 w-4 text-cyan-500" />;
+    }
+    
+    // Default file icon
+    return <File className="h-4 w-4 text-muted-foreground" />;
+  };
 
   // Email validation helper
   const isValidEmail = (email: string): boolean => {
@@ -262,34 +305,85 @@ export function Editor({ form, attachments, onAddAttachment, onRemoveAttachment 
           </div>
         </div>
 
-        <div className="px-6">
-          <div className="flex border-b border-border-light dark:border-border-dark gap-8">
-            <button
-              className={`flex flex-col items-center justify-center border-b-[3px] pb-[13px] pt-4 ${
-                activeTab === "editor"
-                  ? "border-b-primary text-primary"
-                  : "border-b-transparent text-subtext-light dark:text-subtext-dark hover:text-text-light dark:hover:text-text-dark"
-              }`}
-              onClick={() => setActiveTab("editor")}
-            >
-              <p className="text-sm font-bold leading-normal">Editor</p>
-            </button>
-            <button
-              className={`flex flex-col items-center justify-center border-b-[3px] pb-[13px] pt-4 ${
-                activeTab === "templates"
-                  ? "border-b-primary text-primary"
-                  : "border-b-transparent text-subtext-light dark:text-subtext-dark hover:text-text-light dark:hover:text-text-dark"
-              }`}
-              onClick={() => setActiveTab("templates")}
-            >
-              <p className="text-sm font-bold leading-normal">Templates</p>
-            </button>
+        <div className="px-6 pt-4">
+          <div className="flex items-center justify-between border-b border-border-light dark:border-border-dark">
+            <div className="flex gap-8">
+              <button
+                className={`flex flex-col items-center justify-center border-b-[3px] pb-[13px] pt-4 ${
+                  activeTab === "editor"
+                    ? "border-b-primary text-primary"
+                    : "border-b-transparent text-subtext-light dark:text-subtext-dark hover:text-text-light dark:hover:text-text-dark"
+                }`}
+                onClick={() => setActiveTab("editor")}
+              >
+                <p className="text-sm font-bold leading-normal">Editor</p>
+              </button>
+              <button
+                className={`flex flex-col items-center justify-center border-b-[3px] pb-[13px] pt-4 ${
+                  activeTab === "templates"
+                    ? "border-b-primary text-primary"
+                    : "border-b-transparent text-subtext-light dark:text-subtext-dark hover:text-text-light dark:hover:text-text-dark"
+                }`}
+                onClick={() => setActiveTab("templates")}
+              >
+                <p className="text-sm font-bold leading-normal">Templates</p>
+              </button>
+            </div>
+            
+            {/* Attachments Section - Right Side */}
+            <div className="pb-3">
+              <Attachments 
+                attachments={attachments}
+                onAdd={onAddAttachment}
+              />
+            </div>
           </div>
         </div>
 
         <div className="p-6 space-y-6">
           {activeTab === "editor" ? (
             <>
+              {/* Attached Files Display */}
+              {attachments.length > 0 && (
+                <div className="rounded-lg border border-border-light dark:border-border-dark bg-muted/50 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-text-light dark:text-text-dark">
+                      Attached Files ({attachments.length})
+                    </h3>
+                    <span className="text-xs text-muted-foreground">
+                      {attachments.reduce((sum, att) => sum + att.size, 0) > 0 && 
+                        `${(attachments.reduce((sum, att) => sum + att.size, 0) / (1024 * 1024)).toFixed(2)} MB / 25 MB`
+                      }
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {attachments.map((attachment) => (
+                      <div
+                        key={attachment.id}
+                        className="flex items-center gap-2 rounded-md border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark px-3 py-2 text-sm"
+                      >
+                        {getFileIcon(attachment.name, attachment.type)}
+                        <div className="flex flex-col">
+                          <span className="text-text-light dark:text-text-dark font-medium">
+                            {attachment.name}
+                          </span>
+                          <span className="text-xs text-subtext-light dark:text-subtext-dark">
+                            {(attachment.size / 1024).toFixed(2)} KB
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => onRemoveAttachment(attachment.id)}
+                          className="ml-2 p-0.5 rounded-full hover:bg-neutral-light/50 dark:hover:bg-neutral-dark/50 text-subtext-light dark:text-subtext-dark hover:text-text-light dark:hover:text-text-dark"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
               <FormField
                 control={form.control}
                 name="body"
@@ -314,15 +408,6 @@ export function Editor({ form, attachments, onAddAttachment, onRemoveAttachment 
                   </FormItem>
                 )}
               />
-              
-              {/* Attachments Section */}
-              <div className="pt-4 border-t border-border-light dark:border-border-dark">
-                <Attachments 
-                  attachments={attachments}
-                  onAdd={onAddAttachment}
-                  onRemove={onRemoveAttachment}
-                />
-              </div>
             </>
           ) : (
             <div className="flex flex-col rounded-lg border border-border-light dark:border-border-dark min-h-[500px] bg-background-light dark:bg-background-dark p-8">

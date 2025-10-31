@@ -232,10 +232,21 @@ export default function NewCampaignPage() {
       return;
     }
 
-    const values = form.getValues();
+    // Validate form using react-hook-form
+    const isValid = await form.trigger(['subject', 'body']);
     
-    if (!values.subject || !values.body) {
-      toast.error("Subject and body are required");
+    if (!isValid) {
+      const errors = form.formState.errors;
+      
+      if (errors.subject) {
+        toast.error(errors.subject.message || "Subject is required");
+        return;
+      }
+      if (errors.body) {
+        toast.error(errors.body.message || "Email body is required");
+        return;
+      }
+      
       return;
     }
 
@@ -244,6 +255,7 @@ export default function NewCampaignPage() {
       return;
     }
 
+    const values = form.getValues();
     setIsSaving(true);
 
     // Create campaign
@@ -349,10 +361,35 @@ export default function NewCampaignPage() {
       return;
     }
 
-    const values = form.getValues();
-
-    if (!values.subject || !values.body) {
-      toast.error("Subject and body are required");
+    // Validate form using react-hook-form
+    const isValid = await form.trigger();
+    
+    if (!isValid) {
+      const errors = form.formState.errors;
+      
+      // Show specific validation errors
+      if (errors.subject) {
+        toast.error(errors.subject.message || "Subject is required");
+        return;
+      }
+      if (errors.body) {
+        toast.error(errors.body.message || "Email body is required");
+        return;
+      }
+      if (errors.cc) {
+        toast.error("Invalid CC email addresses");
+        return;
+      }
+      if (errors.bcc) {
+        toast.error("Invalid BCC email addresses");
+        return;
+      }
+      if (errors.reply_to) {
+        toast.error("Invalid reply-to email address");
+        return;
+      }
+      
+      toast.error("Please fix the form errors before sending");
       return;
     }
 
