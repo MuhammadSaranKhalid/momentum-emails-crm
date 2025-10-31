@@ -12,7 +12,7 @@ export const memberSchema = z.object({
   mobile: z.string().optional(),
   company_name: z.string().optional(),
   country: z.string().optional(),
-  mode_of_shipment: z.enum(["Air", "Sea", "Land", "Rail"]).optional(),
+  mode_of_shipment: z.enum(["Air", "Sea", "Both"]).optional(),
   import_export: z.enum(["Import", "Export", "Both"]).optional(),
   user_id: z.string().uuid(),
   created_at: z.string().datetime(),
@@ -31,7 +31,7 @@ export const createMemberSchema = z.object({
   mobile: z.string().optional().or(z.literal('')),
   company_name: z.string().optional().or(z.literal('')),
   country: z.string().optional().or(z.literal('')),
-  mode_of_shipment: z.enum(["Air", "Sea", "Land", "Rail"]).optional(),
+  mode_of_shipment: z.enum(["Air", "Sea", "Both"]).optional(),
   import_export: z.enum(["Import", "Export", "Both"]).optional(),
 })
 
@@ -52,8 +52,7 @@ export type UpdateMemberInput = z.infer<typeof updateMemberSchema>
 export const modeOfShipmentOptions = [
   { label: "Air", value: "Air" },
   { label: "Sea", value: "Sea" },
-  { label: "Land", value: "Land" },
-  { label: "Rail", value: "Rail" },
+  { label: "Both", value: "Both" },
 ] as const
 
 // Import/Export options

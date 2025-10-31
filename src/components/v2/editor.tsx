@@ -155,8 +155,9 @@ export function Editor({ form }: EditorProps) {
     }
   };
   return (
-    <div className="flex flex-1 flex-col bg-neutral-light dark:bg-neutral-dark">
-      <ScrollArea className="h-full w-full">
+    <div className="flex flex-1 flex-col bg-neutral-light dark:bg-neutral-dark min-h-0 overflow-hidden">
+      {/* ScrollArea wrapping the entire editor content */}
+      <ScrollArea className="h-[calc(100vh-64px)]">
         <div className="p-6 space-y-4">
           <FormField
             control={form.control}
@@ -183,140 +184,142 @@ export function Editor({ form }: EditorProps) {
           />
 
           <div className="flex w-full gap-4">
-          <div className="flex flex-col w-1/2">
-            <Label
-              htmlFor="cc"
-              className="text-base font-medium leading-normal pb-2 text-text-light dark:text-text-dark"
-            >
-              CC
-            </Label>
-            <Input
-              id="cc"
-              placeholder="Add CC recipients (press Enter or comma)"
-              className="h-14 p-[15px]"
-              value={ccInput}
-              onChange={(e) => setCcInput(e.target.value)}
-              onKeyDown={handleAddCc}
-              onBlur={handleCcBlur}
-            />
-            {ccEmails.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-2">
-                {ccEmails.map((email: string) => (
-                  <div
-                    key={email}
-                    className="flex items-center gap-1 rounded-full bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark pl-2.5 pr-1 py-1 text-sm font-medium border border-border-light dark:border-border-dark"
-                  >
-                    <span>{email}</span>
-                    <button
-                      onClick={() => removeCc(email)}
-                      className="p-0.5 rounded-full text-subtext-light dark:text-subtext-dark hover:bg-neutral-light/50 dark:hover:bg-neutral-dark/50 hover:text-text-light dark:hover:text-text-dark"
+            <div className="flex flex-col w-1/2">
+              <Label
+                htmlFor="cc"
+                className="text-base font-medium leading-normal pb-2 text-text-light dark:text-text-dark"
+              >
+                CC
+              </Label>
+              <Input
+                id="cc"
+                placeholder="Add CC recipients (press Enter or comma)"
+                className="h-14 p-[15px]"
+                value={ccInput}
+                onChange={(e) => setCcInput(e.target.value)}
+                onKeyDown={handleAddCc}
+                onBlur={handleCcBlur}
+              />
+              {ccEmails.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {ccEmails.map((email: string) => (
+                    <div
+                      key={email}
+                      className="flex items-center gap-1 rounded-full bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark pl-2.5 pr-1 py-1 text-sm font-medium border border-border-light dark:border-border-dark"
                     >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          <div className="flex flex-col w-1/2">
-            <Label
-              htmlFor="bcc"
-              className="text-base font-medium leading-normal pb-2 text-text-light dark:text-text-dark"
-            >
-              BCC
-            </Label>
-            <Input
-              id="bcc"
-              placeholder="Add BCC recipients (press Enter or comma)"
-              className="h-14 p-[15px]"
-              value={bccInput}
-              onChange={(e) => setBccInput(e.target.value)}
-              onKeyDown={handleAddBcc}
-              onBlur={handleBccBlur}
-            />
-            {bccEmails.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-2">
-                {bccEmails.map((email: string) => (
-                  <div
-                    key={email}
-                    className="flex items-center gap-1 rounded-full bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark pl-2.5 pr-1 py-1 text-sm font-medium border border-border-light dark:border-border-dark"
-                  >
-                    <span>{email}</span>
-                    <button
-                      onClick={() => removeBcc(email)}
-                      className="p-0.5 rounded-full text-subtext-light dark:text-subtext-dark hover:bg-neutral-light/50 dark:hover:bg-neutral-dark/50 hover:text-text-light dark:hover:text-text-dark"
+                      <span>{email}</span>
+                      <button
+                        onClick={() => removeCc(email)}
+                        className="p-0.5 rounded-full text-subtext-light dark:text-subtext-dark hover:bg-neutral-light/50 dark:hover:bg-neutral-dark/50 hover:text-text-light dark:hover:text-text-dark"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col w-1/2">
+              <Label
+                htmlFor="bcc"
+                className="text-base font-medium leading-normal pb-2 text-text-light dark:text-text-dark"
+              >
+                BCC
+              </Label>
+              <Input
+                id="bcc"
+                placeholder="Add BCC recipients (press Enter or comma)"
+                className="h-14 p-[15px]"
+                value={bccInput}
+                onChange={(e) => setBccInput(e.target.value)}
+                onKeyDown={handleAddBcc}
+                onBlur={handleBccBlur}
+              />
+              {bccEmails.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {bccEmails.map((email: string) => (
+                    <div
+                      key={email}
+                      className="flex items-center gap-1 rounded-full bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark pl-2.5 pr-1 py-1 text-sm font-medium border border-border-light dark:border-border-dark"
                     >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-      <div className="px-6">
-        <div className="flex border-b border-border-light dark:border-border-dark gap-8">
-          <button
-            className={`flex flex-col items-center justify-center border-b-[3px] pb-[13px] pt-4 ${
-              activeTab === "editor"
-                ? "border-b-primary text-primary"
-                : "border-b-transparent text-subtext-light dark:text-subtext-dark hover:text-text-light dark:hover:text-text-dark"
-            }`}
-            onClick={() => setActiveTab("editor")}
-          >
-            <p className="text-sm font-bold leading-normal">Editor</p>
-          </button>
-          <button
-            className={`flex flex-col items-center justify-center border-b-[3px] pb-[13px] pt-4 ${
-              activeTab === "templates"
-                ? "border-b-primary text-primary"
-                : "border-b-transparent text-subtext-light dark:text-subtext-dark hover:text-text-light dark:hover:text-text-dark"
-            }`}
-            onClick={() => setActiveTab("templates")}
-          >
-            <p className="text-sm font-bold leading-normal">Templates</p>
-          </button>
-        </div>
-      </div>
-      <div className="flex flex-col flex-1 p-6">
-        {activeTab === "editor" ? (
-          <FormField
-            control={form.control}
-            name="body"
-            render={({ field }) => (
-              <FormItem className="flex flex-col h-full">
-                <FormControl>
-                  <div className="flex flex-col rounded-lg border border-border-light dark:border-border-dark h-full bg-background-light dark:bg-background-dark">
-                    <RichTextEditor
-                      value={field.value}
-                      onChange={(content: string) => {
-                        field.onChange(content);
-                        dispatch(setBody(content));
-                      }}
-                      placeholder="Start writing your email here..."
-                      setOptions={{
-                        height: "500px",
-                      }}
-                    />
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        ) : (
-          <div className="flex flex-col rounded-lg border border-border-light dark:border-border-dark h-full bg-background-light dark:bg-background-dark p-8">
-            <div className="flex flex-col items-center justify-center h-full">
-              <p className="text-lg font-medium text-text-light dark:text-text-dark mb-2">
-                Templates Coming Soon
-              </p>
-              <p className="text-sm text-subtext-light dark:text-subtext-dark">
-                Select from pre-built email templates
-              </p>
+                      <span>{email}</span>
+                      <button
+                        onClick={() => removeBcc(email)}
+                        className="p-0.5 rounded-full text-subtext-light dark:text-subtext-dark hover:bg-neutral-light/50 dark:hover:bg-neutral-dark/50 hover:text-text-light dark:hover:text-text-dark"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-        )}
+        </div>
+
+        <div className="px-6">
+          <div className="flex border-b border-border-light dark:border-border-dark gap-8">
+            <button
+              className={`flex flex-col items-center justify-center border-b-[3px] pb-[13px] pt-4 ${
+                activeTab === "editor"
+                  ? "border-b-primary text-primary"
+                  : "border-b-transparent text-subtext-light dark:text-subtext-dark hover:text-text-light dark:hover:text-text-dark"
+              }`}
+              onClick={() => setActiveTab("editor")}
+            >
+              <p className="text-sm font-bold leading-normal">Editor</p>
+            </button>
+            <button
+              className={`flex flex-col items-center justify-center border-b-[3px] pb-[13px] pt-4 ${
+                activeTab === "templates"
+                  ? "border-b-primary text-primary"
+                  : "border-b-transparent text-subtext-light dark:text-subtext-dark hover:text-text-light dark:hover:text-text-dark"
+              }`}
+              onClick={() => setActiveTab("templates")}
+            >
+              <p className="text-sm font-bold leading-normal">Templates</p>
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6">
+          {activeTab === "editor" ? (
+            <FormField
+              control={form.control}
+              name="body"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <div className="flex flex-col rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark">
+                      <RichTextEditor
+                        value={field.value}
+                        onChange={(content: string) => {
+                          field.onChange(content);
+                          dispatch(setBody(content));
+                        }}
+                        placeholder="Start writing your email here..."
+                        setOptions={{
+                          height: "500px",
+                        }}
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ) : (
+            <div className="flex flex-col rounded-lg border border-border-light dark:border-border-dark min-h-[500px] bg-background-light dark:bg-background-dark p-8">
+              <div className="flex flex-col items-center justify-center h-full">
+                <p className="text-lg font-medium text-text-light dark:text-text-dark mb-2">
+                  Templates Coming Soon
+                </p>
+                <p className="text-sm text-subtext-light dark:text-subtext-dark">
+                  Select from pre-built email templates
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </ScrollArea>
     </div>

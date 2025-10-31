@@ -21,11 +21,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-interface RecipientsSidebarProps {
-  members: Member[];
-  isLoading: boolean;
-}
-
 // Filter types
 type FilterCategory = "country" | "type" | "shipment";
 
@@ -35,16 +30,28 @@ interface FilterState {
   shipment: string[];
 }
 
-export function RecipientsSidebar({ members, isLoading }: RecipientsSidebarProps) {
+interface RecipientsSidebarProps {
+  members: Member[];
+  isLoading: boolean;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  filters: FilterState;
+  onFiltersChange: (filters: FilterState) => void;
+  availableCountries: string[];
+}
+
+export function RecipientsSidebar({ 
+  members, 
+  isLoading,
+  searchQuery,
+  onSearchChange,
+  filters,
+  onFiltersChange,
+  availableCountries
+}: RecipientsSidebarProps) {
   const dispatch = useDispatch();
   const selectedMemberIds = useSelector(selectSelectedMemberIds);
-  const [searchQuery, setSearchQuery] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
-  const [filters, setFilters] = useState<FilterState>({
-    country: [],
-    type: [],
-    shipment: [],
-  });
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     country: true,
     type: true,
@@ -53,18 +60,16 @@ export function RecipientsSidebar({ members, isLoading }: RecipientsSidebarProps
 
   // Toggle filter option
   const toggleFilter = (category: FilterCategory, value: string) => {
-    setFilters((prev) => {
-      const currentValues = prev[category];
-      const newValues = currentValues.includes(value)
-        ? currentValues.filter((v) => v !== value)
-        : [...currentValues, value];
-      return { ...prev, [category]: newValues };
-    });
+    const currentValues = filters[category];
+    const newValues = currentValues.includes(value)
+      ? currentValues.filter((v) => v !== value)
+      : [...currentValues, value];
+    onFiltersChange({ ...filters, [category]: newValues });
   };
 
   // Clear all filters
   const clearAllFilters = () => {
-    setFilters({
+    onFiltersChange({
       country: [],
       type: [],
       shipment: [],
@@ -82,30 +87,9 @@ export function RecipientsSidebar({ members, isLoading }: RecipientsSidebarProps
     return filters_list;
   }, [filters]);
 
-  // Filter members based on search query and filters
-  const filteredMembers = useMemo(() => {
-    let filtered = members;
-    
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const queryText = searchQuery.toLowerCase();
-      filtered = filtered.filter((member: Member) => {
-        const fullName = member.full_name || `${member.first_name} ${member.last_name}`;
-        return fullName?.toLowerCase().includes(queryText) ||
-          member.email?.toLowerCase().includes(queryText) ||
-          member.company_name?.toLowerCase().includes(queryText);
-      });
-    }
-
-    // Note: Additional filter logic would go here based on your member data structure
-    // For now, we're just showing the UI structure
-    
-    return filtered;
-  }, [members, searchQuery]);
-
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      const allIds = filteredMembers.map((m: Member) => m.id);
+      const allIds = members.map((m: Member) => m.id);
       dispatch(setSelectedMemberIds(allIds));
     } else {
       dispatch(setSelectedMemberIds([]));
@@ -120,11 +104,11 @@ export function RecipientsSidebar({ members, isLoading }: RecipientsSidebarProps
     }
   };
 
-  const isAllSelected = filteredMembers.length > 0 && 
-    filteredMembers.every((m: Member) => selectedMemberIds.includes(m.id));
+  const isAllSelected = members.length > 0 && 
+    members.every((m: Member) => selectedMemberIds.includes(m.id));
 
   return (
-    <aside className="flex w-96 flex-col border-l bg-card h-full overflow-hidden">
+    <aside className="flex w-96 flex-col border-l bg-card h-full shrink-0 overflow-hidden">
       <div className="flex flex-col p-4 space-y-4 shrink-0">
         <h2 className="text-lg font-semibold">
           Recipients
@@ -142,7 +126,7 @@ export function RecipientsSidebar({ members, isLoading }: RecipientsSidebarProps
               placeholder="Search recipients..."
               className="pl-10"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => onSearchChange(e.target.value)}
             />
           </div>
           <Popover open={filterOpen} onOpenChange={setFilterOpen}>
@@ -173,27 +157,19 @@ export function RecipientsSidebar({ members, isLoading }: RecipientsSidebarProps
                     />
                   </CollapsibleTrigger>
                   <CollapsibleContent className="px-2 pb-2 pt-1 space-y-2">
-                    <Label className="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-accent">
-                      <Checkbox
-                        checked={filters.country.includes("USA")}
-                        onCheckedChange={() => toggleFilter("country", "USA")}
-                      />
-                      <span className="text-sm">USA</span>
-                    </Label>
-                    <Label className="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-accent">
-                      <Checkbox
-                        checked={filters.country.includes("Canada")}
-                        onCheckedChange={() => toggleFilter("country", "Canada")}
-                      />
-                      <span className="text-sm">Canada</span>
-                    </Label>
-                    <Label className="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-accent">
-                      <Checkbox
-                        checked={filters.country.includes("UK")}
-                        onCheckedChange={() => toggleFilter("country", "UK")}
-                      />
-                      <span className="text-sm">UK</span>
-                    </Label>
+                    {availableCountries.length === 0 ? (
+                      <p className="text-sm text-muted-foreground px-2 py-1">No countries available</p>
+                    ) : (
+                      availableCountries.map((country) => (
+                        <Label key={country} className="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-accent">
+                          <Checkbox
+                            checked={filters.country.includes(country)}
+                            onCheckedChange={() => toggleFilter("country", country)}
+                          />
+                          <span className="text-sm">{country}</span>
+                        </Label>
+                      ))
+                    )}
                   </CollapsibleContent>
                 </Collapsible>
 
@@ -227,6 +203,13 @@ export function RecipientsSidebar({ members, isLoading }: RecipientsSidebarProps
                       />
                       <span className="text-sm">Export</span>
                     </Label>
+                    <Label className="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-accent">
+                      <Checkbox
+                        checked={filters.type.includes("Both")}
+                        onCheckedChange={() => toggleFilter("type", "Both")}
+                      />
+                      <span className="text-sm">Both</span>
+                    </Label>
                   </CollapsibleContent>
                 </Collapsible>
 
@@ -248,17 +231,24 @@ export function RecipientsSidebar({ members, isLoading }: RecipientsSidebarProps
                   <CollapsibleContent className="px-2 pb-2 pt-1 space-y-2">
                     <Label className="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-accent">
                       <Checkbox
-                        checked={filters.shipment.includes("Air Freight")}
-                        onCheckedChange={() => toggleFilter("shipment", "Air Freight")}
+                        checked={filters.shipment.includes("Air")}
+                        onCheckedChange={() => toggleFilter("shipment", "Air")}
                       />
-                      <span className="text-sm">Air Freight</span>
+                      <span className="text-sm">Air</span>
                     </Label>
                     <Label className="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-accent">
                       <Checkbox
-                        checked={filters.shipment.includes("Sea Freight")}
-                        onCheckedChange={() => toggleFilter("shipment", "Sea Freight")}
+                        checked={filters.shipment.includes("Sea")}
+                        onCheckedChange={() => toggleFilter("shipment", "Sea")}
                       />
-                      <span className="text-sm">Sea Freight</span>
+                      <span className="text-sm">Sea</span>
+                    </Label>
+                    <Label className="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-accent">
+                      <Checkbox
+                        checked={filters.shipment.includes("Both")}
+                        onCheckedChange={() => toggleFilter("shipment", "Both")}
+                      />
+                      <span className="text-sm">Both</span>
                     </Label>
                   </CollapsibleContent>
                 </Collapsible>
@@ -305,7 +295,7 @@ export function RecipientsSidebar({ members, isLoading }: RecipientsSidebarProps
       </div>
 
       {/* Scrollable Members List */}
-      <div className="flex flex-col flex-1 min-h-0 px-4 pb-4">
+      <div className="flex flex-col flex-1 min-h-0 px-4">
         <div className="flex items-center justify-between py-2 border-t shrink-0">
           <Label className="flex items-center space-x-3 cursor-pointer">
             <Checkbox 
@@ -315,49 +305,51 @@ export function RecipientsSidebar({ members, isLoading }: RecipientsSidebarProps
             <span className="text-sm font-medium">Select All</span>
           </Label>
           <span className="text-sm text-muted-foreground">
-            {filteredMembers.length} {filteredMembers.length === 1 ? 'item' : 'items'}
+            {members.length} {members.length === 1 ? 'item' : 'items'}
           </span>
         </div>
         
-        <div className="flex-1 min-h-0 mt-2">
-          <ScrollArea className="h-full w-full">
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-8 gap-3">
-              <Spinner className="h-6 w-6" />
-              <p className="text-sm text-muted-foreground">Loading members...</p>
+        <div className="flex-1 min-h-0 mt-2 pb-4">
+          <ScrollArea className="h-full">
+            <div className="pr-2">
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-8 gap-3">
+                <Spinner className="h-6 w-6" />
+                <p className="text-sm text-muted-foreground">Loading members...</p>
+              </div>
+            ) : members.length === 0 ? (
+              <div className="flex items-center justify-center py-8">
+                <p className="text-sm text-muted-foreground">
+                  {searchQuery ? 'No members found' : 'No members available'}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {members.map((member: Member) => (
+                  <Label 
+                    key={member.id}
+                    className="flex items-center gap-3 rounded-lg p-3 hover:bg-accent cursor-pointer transition-colors"
+                  >
+                    <Checkbox 
+                      checked={selectedMemberIds.includes(member.id)}
+                      onCheckedChange={(checked) => handleSelectMember(member.id, checked as boolean)}
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">
+                        {member.full_name || `${member.first_name} ${member.last_name}`}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {member.email || 'No email'}
+                      </p>
+                      {member.company_name && (
+                        <p className="text-xs text-muted-foreground">{member.company_name}</p>
+                      )}
+                    </div>
+                  </Label>
+                ))}
+              </div>
+            )}
             </div>
-          ) : filteredMembers.length === 0 ? (
-            <div className="flex items-center justify-center py-8">
-              <p className="text-sm text-muted-foreground">
-                {searchQuery ? 'No members found' : 'No members available'}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-1 pr-2">
-              {filteredMembers.map((member: Member) => (
-                <Label 
-                  key={member.id}
-                  className="flex items-center gap-3 rounded-lg p-3 hover:bg-accent cursor-pointer transition-colors"
-                >
-                  <Checkbox 
-                    checked={selectedMemberIds.includes(member.id)}
-                    onCheckedChange={(checked) => handleSelectMember(member.id, checked as boolean)}
-                  />
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">
-                      {member.full_name || `${member.first_name} ${member.last_name}`}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {member.email || 'No email'}
-                    </p>
-                    {member.company_name && (
-                      <p className="text-xs text-muted-foreground">{member.company_name}</p>
-                    )}
-                  </div>
-                </Label>
-              ))}
-            </div>
-          )}
           </ScrollArea>
         </div>
       </div>

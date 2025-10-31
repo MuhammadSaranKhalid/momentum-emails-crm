@@ -86,20 +86,6 @@ export default function DashboardOverviewPage() {
       iconBg: 'bg-blue-500/10',
       iconColor: 'text-blue-600 dark:text-blue-500',
     },
-    // {
-    //   title: 'Open Rate',
-    //   value: '23.5%',
-    //   icon: Eye,
-    //   iconBg: 'bg-green-500/10',
-    //   iconColor: 'text-green-600 dark:text-green-500',
-    // },
-    // {
-    //   title: 'Click-through',
-    //   value: '4.8%',
-    //   icon: MousePointerClick,
-    //   iconBg: 'bg-purple-500/10',
-    //   iconColor: 'text-purple-600 dark:text-purple-500',
-    // },
   ];
 
   // Fetch inbox emails

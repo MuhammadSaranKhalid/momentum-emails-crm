@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useCreate, useCreateMany, useList, useGetIdentity } from "@refinedev/core";
+import { useCreate, useCreateMany, useList, useGetIdentity, CrudFilter } from "@refinedev/core";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useSelector, useDispatch } from "react-redux";
+import { supabaseBrowserClient } from "@/utils/supabase/client";
 
 import { Editor } from "@/components/v2/editor";
 import { Header } from "@/components/v2/header";
@@ -29,16 +30,57 @@ const campaignFormSchema = z.object({
 
 type CampaignFormValues = z.infer<typeof campaignFormSchema>;
 
+// Filter types
+interface FilterState {
+  country: string[];
+  type: string[];
+  shipment: string[];
+}
+
 export default function NewCampaignPage() {
   const router = useRouter();
   const dispatch = useDispatch();
   const [isSaving, setIsSaving] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [showSendConfirmation, setShowSendConfirmation] = useState(false);
+  
+  // Filter and search state for database-level filtering
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState<FilterState>({
+    country: [],
+    type: [],
+    shipment: [],
+  });
+  const [availableCountries, setAvailableCountries] = useState<string[]>([]);
 
   // Get authenticated user identity using Refine
   const { data: identity } = useGetIdentity<{ id: string }>();
   const userId = identity?.id;
+
+  // Fetch distinct countries from database using RPC
+  useEffect(() => {
+    const fetchDistinctCountries = async () => {
+      if (!userId) return;
+
+      try {
+        const { data, error } = await supabaseBrowserClient
+          .rpc('get_distinct_countries', { p_user_id: userId });
+
+        if (error) {
+          console.error('Error fetching countries:', error);
+          return;
+        }
+
+        // Extract country values from the result
+        const countries = data?.map((item: { country: string }) => item.country) || [];
+        setAvailableCountries(countries);
+      } catch (error) {
+        console.error('Error fetching distinct countries:', error);
+      }
+    };
+
+    fetchDistinctCountries();
+  }, [userId]);
 
   // Get campaign data from Redux
   const campaignData = useSelector(selectCampaignData);
@@ -53,12 +95,56 @@ export default function NewCampaignPage() {
     dispatch(setCampaignName(name));
   };
 
-  // Fetch all members to get email addresses
+  // Build database filters
+  const dbFilters: CrudFilter[] = [];
+  
+  // Search filter
+  if (searchQuery.trim()) {
+    const searchText = searchQuery.toLowerCase();
+    dbFilters.push({
+      operator: "or",
+      value: [
+        { field: "full_name", operator: "contains", value: searchText },
+        { field: "email", operator: "contains", value: searchText },
+        { field: "company_name", operator: "contains", value: searchText },
+      ],
+    });
+  }
+
+  // Country filter
+  if (filters.country.length > 0) {
+    dbFilters.push({
+      field: "country",
+      operator: "in",
+      value: filters.country,
+    });
+  }
+
+  // Import/Export filter
+  if (filters.type.length > 0) {
+    dbFilters.push({
+      field: "import_export",
+      operator: "in",
+      value: filters.type,
+    });
+  }
+
+  // Mode of shipment filter
+  if (filters.shipment.length > 0) {
+    dbFilters.push({
+      field: "mode_of_shipment",
+      operator: "in",
+      value: filters.shipment,
+    });
+  }
+
+  // Fetch members with database-level filtering
   const { result: membersData, query: membersQuery } = useList<Member>({
     resource: "members",
     pagination: {
       mode: "off",
     },
+    filters: dbFilters,
   });
 
   const members = membersData?.data || [];
@@ -306,7 +392,7 @@ export default function NewCampaignPage() {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-screen overflow-hidden">
       <Form {...form}>
         <form className="flex flex-col h-full">
           {/* Fixed Header - stays at top */}
@@ -323,9 +409,17 @@ export default function NewCampaignPage() {
           </div>
 
           {/* Scrollable Content Area - Editor and Recipients */}
-          <main className="flex flex-1 min-h-0">
+          <main className="flex flex-1 min-h-0 overflow-hidden">
             <Editor form={form} />
-            <RecipientsSidebar members={members} isLoading={isMembersLoading} />
+            <RecipientsSidebar 
+              members={members} 
+              isLoading={isMembersLoading}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              filters={filters}
+              onFiltersChange={setFilters}
+              availableCountries={availableCountries}
+            />
           </main>
         </form>
       </Form>
