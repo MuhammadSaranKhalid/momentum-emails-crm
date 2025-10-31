@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useCreate, useCreateMany, useList, useGetIdentity, CrudFilter } from "@refinedev/core";
 import { useForm } from "react-hook-form";
@@ -9,15 +9,21 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { useSelector, useDispatch } from "react-redux";
 import { supabaseBrowserClient } from "@/utils/supabase/client";
+import { Save, Send, Pencil, Check, X } from "lucide-react";
 
 import { Editor } from "@/components/v2/editor";
-import { Header } from "@/components/v2/header";
 import { RecipientsSidebar } from "@/components/v2/recipients-sidebar";
 import { SendConfirmationDialog } from "@/components/v2/send-confirmation-dialog";
 import { Form } from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
+import { DashboardHeader } from "@/components/dashboard-header";
 import { selectCampaignData, selectCampaignName, selectSelectedMemberIds, setCampaignName } from "@/store/features/campaigns/campaignSlice";
 import { Member } from "@/app/dashboard/members/data/schema";
 import { RootState } from "@/store";
+import { uploadCampaignAttachments } from "@/utils/attachments";
+import type { Attachment } from "@/types/attachment";
 
 // Campaign form schema
 const campaignFormSchema = z.object({
@@ -43,6 +49,10 @@ export default function NewCampaignPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [showSendConfirmation, setShowSendConfirmation] = useState(false);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [tempName, setTempName] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
   
   // Filter and search state for database-level filtering
   const [searchQuery, setSearchQuery] = useState("");
@@ -90,9 +100,46 @@ export default function NewCampaignPage() {
   // Get selected Microsoft account from Redux
   const selectedAccount = useSelector((state: RootState) => state.accounts.selectedAccount);
 
-  // Handler for campaign name change
-  const handleCampaignNameChange = (name: string) => {
-    dispatch(setCampaignName(name));
+  // Attachment handlers
+  const handleAddAttachment = (attachment: Attachment) => {
+    setAttachments((prev) => [...prev, attachment]);
+  };
+
+  const handleRemoveAttachment = (id: string) => {
+    setAttachments((prev) => prev.filter((att) => att.id !== id));
+  };
+
+  // Campaign name editing handlers
+  useEffect(() => {
+    if (isEditingName && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditingName]);
+
+  const handleEditClick = () => {
+    setTempName(campaignName);
+    setIsEditingName(true);
+  };
+
+  const handleSaveName = () => {
+    if (tempName.trim()) {
+      dispatch(setCampaignName(tempName.trim()));
+      setIsEditingName(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setTempName(campaignName);
+    setIsEditingName(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSaveName();
+    } else if (e.key === 'Escape') {
+      handleCancelEdit();
+    }
   };
 
   // Build database filters
@@ -217,46 +264,63 @@ export default function NewCampaignPage() {
         },
       },
       {
-        onSuccess: (data) => {
+        onSuccess: async (data) => {
           const campaignId = data.data.id;
 
-          // Create recipients with email and name, filter out invalid ones
-          const recipientsData = selectedMemberIds
-            .map((memberId) => {
-              const member = members.find((m: Member) => m.id === memberId);
-              if (!member || !member.email) {
-                console.warn(`Skipping member ${memberId} - no email found`);
-                return null;
-              }
-              return {
-                campaign_id: campaignId,
-                member_id: memberId,
-                recipient_email: member.email,
-                recipient_name: member.full_name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || '',
-                status: "pending",
-              };
-            })
-            .filter((recipient): recipient is NonNullable<typeof recipient> => recipient !== null);
+          if (!campaignId) {
+            setIsSaving(false);
+            toast.error("Failed to get campaign ID");
+            return;
+          }
 
-          // Batch insert all recipients at once
-          createManyRecipients(
-            {
-              resource: "campaign_recipients",
-              values: recipientsData,
-            },
-            {
-              onSuccess: () => {
-                setIsSaving(false);
-                toast.success("Campaign saved as draft");
-                router.push("/dashboard/campaigns");
-              },
-              onError: (error) => {
-                setIsSaving(false);
-                console.error("Error creating recipients:", error);
-                toast.error("Campaign saved but failed to add recipients");
-              },
+          try {
+            // Upload attachments if any
+            if (attachments.length > 0) {
+              await uploadCampaignAttachments(campaignId as string, attachments);
             }
-          );
+
+            // Create recipients with email and name, filter out invalid ones
+            const recipientsData = selectedMemberIds
+              .map((memberId) => {
+                const member = members.find((m: Member) => m.id === memberId);
+                if (!member || !member.email) {
+                  console.warn(`Skipping member ${memberId} - no email found`);
+                  return null;
+                }
+                return {
+                  campaign_id: campaignId,
+                  member_id: memberId,
+                  recipient_email: member.email,
+                  recipient_name: member.full_name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || '',
+                  status: "pending",
+                };
+              })
+              .filter((recipient): recipient is NonNullable<typeof recipient> => recipient !== null);
+
+            // Batch insert all recipients at once
+            createManyRecipients(
+              {
+                resource: "campaign_recipients",
+                values: recipientsData,
+              },
+              {
+                onSuccess: () => {
+                  setIsSaving(false);
+                  toast.success("Campaign saved as draft");
+                  router.push("/dashboard/campaigns");
+                },
+                onError: (error) => {
+                  setIsSaving(false);
+                  console.error("Error creating recipients:", error);
+                  toast.error("Campaign saved but failed to add recipients");
+                },
+              }
+            );
+          } catch (error) {
+            setIsSaving(false);
+            console.error("Error uploading attachments:", error);
+            toast.error("Campaign saved but failed to upload attachments");
+          }
         },
         onError: (error) => {
           setIsSaving(false);
@@ -330,46 +394,63 @@ export default function NewCampaignPage() {
         },
       },
       {
-        onSuccess: (data) => {
+        onSuccess: async (data) => {
           const campaignId = data.data.id;
 
-          // Create recipients with email and name, filter out invalid ones
-          const recipientsData = selectedMemberIds
-            .map((memberId) => {
-              const member = members.find((m: Member) => m.id === memberId);
-              if (!member || !member.email) {
-                console.warn(`Skipping member ${memberId} - no email found`);
-                return null;
-              }
-              return {
-                campaign_id: campaignId,
-                member_id: memberId,
-                recipient_email: member.email,
-                recipient_name: member.full_name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || '',
-                status: "pending",
-              };
-            })
-            .filter((recipient): recipient is NonNullable<typeof recipient> => recipient !== null);
+          if (!campaignId) {
+            setIsSending(false);
+            toast.error("Failed to get campaign ID");
+            return;
+          }
 
-          // Batch insert all recipients at once
-          createManyRecipients(
-            {
-              resource: "campaign_recipients",
-              values: recipientsData,
-            },
-            {
-              onSuccess: () => {
-                setIsSending(false);
-                toast.success("Campaign is being sent!");
-                router.push("/dashboard/campaigns");
-              },
-              onError: (error) => {
-                setIsSending(false);
-                console.error("Error creating recipients:", error);
-                toast.error("Campaign created but failed to add recipients");
-              },
+          try {
+            // Upload attachments if any
+            if (attachments.length > 0) {
+              await uploadCampaignAttachments(campaignId as string, attachments);
             }
-          );
+
+            // Create recipients with email and name, filter out invalid ones
+            const recipientsData = selectedMemberIds
+              .map((memberId) => {
+                const member = members.find((m: Member) => m.id === memberId);
+                if (!member || !member.email) {
+                  console.warn(`Skipping member ${memberId} - no email found`);
+                  return null;
+                }
+                return {
+                  campaign_id: campaignId,
+                  member_id: memberId,
+                  recipient_email: member.email,
+                  recipient_name: member.full_name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || '',
+                  status: "pending",
+                };
+              })
+              .filter((recipient): recipient is NonNullable<typeof recipient> => recipient !== null);
+
+            // Batch insert all recipients at once
+            createManyRecipients(
+              {
+                resource: "campaign_recipients",
+                values: recipientsData,
+              },
+              {
+                onSuccess: () => {
+                  setIsSending(false);
+                  toast.success("Campaign is being sent!");
+                  router.push("/dashboard/campaigns");
+                },
+                onError: (error) => {
+                  setIsSending(false);
+                  console.error("Error creating recipients:", error);
+                  toast.error("Campaign created but failed to add recipients");
+                },
+              }
+            );
+          } catch (error) {
+            setIsSending(false);
+            console.error("Error uploading attachments:", error);
+            toast.error("Campaign created but failed to upload attachments");
+          }
         },
         onError: (error) => {
           setIsSending(false);
@@ -380,37 +461,105 @@ export default function NewCampaignPage() {
     );
   };
 
-  // Handle preview
-  const handlePreview = () => {
-    const values = form.getValues();
-    if (!values.subject || !values.body) {
-      toast.error("Subject and body are required for preview");
-      return;
-    }
-    // TODO: Implement preview modal
-    toast.info("Preview feature coming soon");
-  };
+  // Custom breadcrumb with editable campaign name
+  const campaignNameBreadcrumb = (
+    <div className="flex items-center gap-2">
+      {isEditingName ? (
+        <>
+          <Input
+            ref={inputRef}
+            type="text"
+            value={tempName}
+            onChange={(e) => setTempName(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Enter campaign name..."
+            className="h-8 max-w-xs"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleSaveName}
+            className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-600/10"
+          >
+            <Check className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleCancelEdit}
+            className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </>
+      ) : (
+        <>
+          <span className="font-medium">{campaignName}</span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleEditClick}
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+          >
+            <Pencil className="h-3 w-3" />
+          </Button>
+        </>
+      )}
+    </div>
+  );
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
-      <Form {...form}>
-        <form className="flex flex-col h-full">
-          {/* Fixed Header - stays at top */}
-          <div className="shrink-0">
-            <Header 
-              campaignName={campaignName}
-              onCampaignNameChange={handleCampaignNameChange}
-              onPreview={handlePreview}
-              onSaveDraft={handleSaveDraft}
-              onSendCampaign={handleSendCampaign}
-              isSaving={isSaving}
-              isSending={isSending}
-            />
-          </div>
+    <>
+      <DashboardHeader
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Campaigns', href: '/dashboard/campaigns' },
+          { label: campaignNameBreadcrumb }
+        ]}
+        actions={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleSaveDraft}
+              disabled={isSaving || isSending}
+            >
+              {isSaving ? (
+                <Spinner className="mr-2 h-4 w-4" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              {isSaving ? "Saving..." : "Save Draft"}
+            </Button>
+            <Button 
+              type="button"
+              onClick={handleSendCampaign}
+              disabled={isSaving || isSending}
+            >
+              {isSending ? (
+                <Spinner className="mr-2 h-4 w-4" />
+              ) : (
+                <Send className="mr-2 h-4 w-4" />
+              )}
+              {isSending ? "Sending..." : "Send Campaign"}
+            </Button>
+          </>
+        }
+      />
 
-          {/* Scrollable Content Area - Editor and Recipients */}
-          <main className="flex flex-1 min-h-0 overflow-hidden">
-            <Editor form={form} />
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        <Form {...form}>
+          <form className="flex flex-1 min-h-0">
+            {/* Scrollable Content Area - Editor and Recipients */}
+            <Editor 
+              form={form}
+              attachments={attachments}
+              onAddAttachment={handleAddAttachment}
+              onRemoveAttachment={handleRemoveAttachment}
+            />
             <RecipientsSidebar 
               members={members} 
               isLoading={isMembersLoading}
@@ -420,9 +569,9 @@ export default function NewCampaignPage() {
               onFiltersChange={setFilters}
               availableCountries={availableCountries}
             />
-          </main>
-        </form>
-      </Form>
+          </form>
+        </Form>
+      </div>
 
       <SendConfirmationDialog
         open={showSendConfirmation}
@@ -431,9 +580,10 @@ export default function NewCampaignPage() {
         campaignName={campaignName}
         subject={form.watch("subject")}
         recipientCount={selectedMemberIds.length}
+        attachmentCount={attachments.length}
         isLoading={isSending}
       />
-    </div>
+    </>
   );
 }
 

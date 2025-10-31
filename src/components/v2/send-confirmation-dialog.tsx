@@ -11,7 +11,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Mail, Users } from "lucide-react";
+import { AlertTriangle, Mail, Users, Paperclip } from "lucide-react";
 
 interface SendConfirmationDialogProps {
   open: boolean;
@@ -20,6 +20,7 @@ interface SendConfirmationDialogProps {
   campaignName: string;
   subject: string;
   recipientCount: number;
+  attachmentCount?: number;
   isLoading?: boolean;
 }
 
@@ -30,6 +31,7 @@ export function SendConfirmationDialog({
   campaignName,
   subject,
   recipientCount,
+  attachmentCount = 0,
   isLoading = false,
 }: SendConfirmationDialogProps) {
   const handleConfirm = () => {
@@ -88,6 +90,20 @@ export function SendConfirmationDialog({
                   </Badge>
                 </div>
               </div>
+
+              {attachmentCount > 0 && (
+                <div className="flex items-start gap-3">
+                  <Paperclip className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                      Attachments
+                    </p>
+                    <Badge variant="secondary" className="font-semibold">
+                      {attachmentCount} {attachmentCount === 1 ? 'file' : 'files'}
+                    </Badge>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex items-start gap-2 rounded-lg border border-orange-200 bg-orange-50 dark:border-orange-900/50 dark:bg-orange-900/10 p-3">

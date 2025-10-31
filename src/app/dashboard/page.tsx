@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { formatDistanceToNow } from 'date-fns';
+import { DashboardHeader } from '@/components/dashboard-header';
 
 interface Email {
   id: string;
@@ -176,16 +177,17 @@ export default function DashboardOverviewPage() {
 
   return (
     <>
-      {/* Header */}
-      <header className="flex h-16 items-center justify-between gap-4 border-b bg-card px-6 py-3">
-        <h1 className="text-lg font-semibold">Dashboard</h1>
-        <Button asChild>
-          <Link href="/dashboard/campaigns/new">
-            <Send className="mr-2 h-4 w-4" />
-            New Campaign
-          </Link>
-        </Button>
-      </header>
+      <DashboardHeader 
+        title="Dashboard Overview"
+        actions={
+          <Button asChild>
+            <Link href="/dashboard/campaigns/new">
+              <Send className="mr-2 h-4 w-4" />
+              New Campaign
+            </Link>
+          </Button>
+        }
+      />
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto p-6">

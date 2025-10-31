@@ -11,7 +11,10 @@ import { Provider } from "react-redux"
 import "./globals.css"
 import { authProviderClient } from "@/providers/auth-provider/auth-provider.client"
 import { dataProvider } from "@/providers/data-provider"
+import { liveProvider } from "@refinedev/supabase"
 import { store } from "@/store";
+import { supabaseBrowserClient } from "@/utils/supabase/client"
+import { ThemeProvider } from "@/components/theme-provider"
 
 // export const metadata: Metadata = {
 //   title: "Refine",
@@ -27,54 +30,66 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <Provider store={store}>
-      <html lang="en">
-        <body>
-          <Suspense>
-            <RefineKbarProvider>
-              <Refine
-                routerProvider={routerProvider}
-                authProvider={authProviderClient}
-                dataProvider={dataProvider}
-                resources={[
-                  {
-                    name: "dashboard",
-                    list: "/dashboard",
-                  },
-                  // {
-                  //   name: "blog_posts",
-                  //   list: "/blog-posts",
-                  //   create: "/blog-posts/create",
-                  //   edit: "/blog-posts/edit/:id",
-                  //   show: "/blog-posts/show/:id",
-                  //   meta: {
-                  //     canDelete: true,
-                  //   },
-                  // },
-                  // {
-                  //   name: "categories",
-                  //   list: "/categories",
-                  //   create: "/categories/create",
-                  //   edit: "/categories/edit/:id",
-                  //   show: "/categories/show/:id",
-                  //   meta: {
-                  //     canDelete: true,
-                  //   },
-                  // },
-                ]}
-                options={{
-                  syncWithLocation: true,
-                  warnWhenUnsavedChanges: true,
-                  projectId: "6zlbqX-cY8J84-PvPF6c",
-                }}
-              >
-                {children}
-                <RefineKbar />
-              </Refine>
-            </RefineKbarProvider>
-          </Suspense>
-        </body>
-      </html>
-    </Provider>
+    <html lang="en" suppressHydrationWarning>
+      <body>
+        <Provider store={store}>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <Suspense>
+              <RefineKbarProvider>
+                <Refine
+                  routerProvider={routerProvider}
+                  authProvider={authProviderClient}
+                  dataProvider={dataProvider}
+                  liveProvider={liveProvider(supabaseBrowserClient)}
+                  onLiveEvent={(event) => {
+                    console.log("Live event received:", event)
+                  }}
+                  resources={[
+                    {
+                      name: "dashboard",
+                      list: "/dashboard",
+                    },
+                    // {
+                    //   name: "blog_posts",
+                    //   list: "/blog-posts",
+                    //   create: "/blog-posts/create",
+                    //   edit: "/blog-posts/edit/:id",
+                    //   show: "/blog-posts/show/:id",
+                    //   meta: {
+                    //     canDelete: true,
+                    //   },
+                    // },
+                    // {
+                    //   name: "categories",
+                    //   list: "/categories",
+                    //   create: "/categories/create",
+                    //   edit: "/categories/edit/:id",
+                    //   show: "/categories/show/:id",
+                    //   meta: {
+                    //     canDelete: true,
+                    //   },
+                    // },
+                  ]}
+                  options={{
+                    syncWithLocation: true,
+                    warnWhenUnsavedChanges: true,
+                    projectId: "6zlbqX-cY8J84-PvPF6c",
+                    liveMode: "auto",
+                  }}
+                >
+                  {children}
+                  <RefineKbar />
+                </Refine>
+              </RefineKbarProvider>
+            </Suspense>
+          </ThemeProvider>
+        </Provider>
+      </body>
+    </html>
   )
 }

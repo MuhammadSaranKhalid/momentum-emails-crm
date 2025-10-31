@@ -23,22 +23,43 @@ export interface Campaign {
   updated_at: string;
 }
 
-const getStatusBadgeVariant = (status: Campaign['status']) => {
+const getStatusBadgeConfig = (status: Campaign['status']) => {
   switch (status) {
     case 'sent':
-      return 'default';
+      return {
+        variant: 'default' as const,
+        className: 'bg-green-500 hover:bg-green-600 text-white'
+      };
     case 'draft':
-      return 'secondary';
+      return {
+        variant: 'secondary' as const,
+        className: 'bg-gray-500 hover:bg-gray-600 text-white'
+      };
     case 'sending':
-      return 'default';
+      return {
+        variant: 'default' as const,
+        className: 'bg-blue-500 hover:bg-blue-600 text-white animate-pulse'
+      };
     case 'scheduled':
-      return 'outline';
+      return {
+        variant: 'outline' as const,
+        className: 'border-purple-500 text-purple-700 dark:text-purple-400'
+      };
     case 'paused':
-      return 'secondary';
+      return {
+        variant: 'secondary' as const,
+        className: 'bg-yellow-500 hover:bg-yellow-600 text-white'
+      };
     case 'cancelled':
-      return 'destructive';
+      return {
+        variant: 'destructive' as const,
+        className: ''
+      };
     default:
-      return 'secondary';
+      return {
+        variant: 'secondary' as const,
+        className: ''
+      };
   }
 };
 
@@ -80,8 +101,9 @@ export const columns: ColumnDef<Campaign>[] = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
     cell: ({ row }) => {
       const status = row.getValue('status') as Campaign['status'];
+      const { variant, className } = getStatusBadgeConfig(status);
       return (
-        <Badge variant={getStatusBadgeVariant(status)}>
+        <Badge variant={variant} className={className}>
           {status.charAt(0).toUpperCase() + status.slice(1)}
         </Badge>
       );

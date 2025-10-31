@@ -16,7 +16,6 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarRail,
-  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -98,15 +97,7 @@ export function V2Sidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        {/* Expanded: show switcher and trigger aligned right */}
-        <div className="flex items-center justify-between group-data-[collapsible=icon]:hidden">
-          <MicrosoftAccountSwitcher />
-          <SidebarTrigger />
-        </div>
-        {/* Collapsed: center a trigger so it's always visible */}
-        <div className="hidden items-center justify-center group-data-[collapsible=icon]:flex">
-          <SidebarTrigger />
-        </div>
+        <MicrosoftAccountSwitcher />
       </SidebarHeader>
 
       <SidebarContent>

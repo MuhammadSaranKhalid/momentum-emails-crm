@@ -20,6 +20,8 @@ import {
 } from "@/store/features/campaigns/campaignSlice";
 import dynamic from "next/dynamic";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Attachments } from "@/components/v2/attachments";
+import type { Attachment } from "@/types/attachment";
 
 const RichTextEditor = dynamic(
   () => import("@/components/ui/rich-text-editor"),
@@ -45,9 +47,12 @@ interface CampaignFormData {
 
 interface EditorProps {
   form: UseFormReturn<CampaignFormData>;
+  attachments: Attachment[];
+  onAddAttachment: (attachment: Attachment) => void;
+  onRemoveAttachment: (id: string) => void;
 }
 
-export function Editor({ form }: EditorProps) {
+export function Editor({ form, attachments, onAddAttachment, onRemoveAttachment }: EditorProps) {
   const dispatch = useDispatch();
   const [ccInput, setCcInput] = useState("");
   const [bccInput, setBccInput] = useState("");
@@ -282,32 +287,43 @@ export function Editor({ form }: EditorProps) {
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-6 space-y-6">
           {activeTab === "editor" ? (
-            <FormField
-              control={form.control}
-              name="body"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <div className="flex flex-col rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark">
-                      <RichTextEditor
-                        value={field.value}
-                        onChange={(content: string) => {
-                          field.onChange(content);
-                          dispatch(setBody(content));
-                        }}
-                        placeholder="Start writing your email here..."
-                        setOptions={{
-                          height: "500px",
-                        }}
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <>
+              <FormField
+                control={form.control}
+                name="body"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <div className="flex flex-col rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark">
+                        <RichTextEditor
+                          value={field.value}
+                          onChange={(content: string) => {
+                            field.onChange(content);
+                            dispatch(setBody(content));
+                          }}
+                          placeholder="Start writing your email here..."
+                          setOptions={{
+                            height: "500px",
+                          }}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              {/* Attachments Section */}
+              <div className="pt-4 border-t border-border-light dark:border-border-dark">
+                <Attachments 
+                  attachments={attachments}
+                  onAdd={onAddAttachment}
+                  onRemove={onRemoveAttachment}
+                />
+              </div>
+            </>
           ) : (
             <div className="flex flex-col rounded-lg border border-border-light dark:border-border-dark min-h-[500px] bg-background-light dark:bg-background-dark p-8">
               <div className="flex flex-col items-center justify-center h-full">

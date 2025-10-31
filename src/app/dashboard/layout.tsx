@@ -15,7 +15,9 @@ export default function DashboardLayout({
       <SidebarProvider>
         <V2Sidebar />
         <SidebarInset>
-          {children}
+          <div className="flex flex-1 flex-col">
+            {children}
+          </div>
         </SidebarInset>
       </SidebarProvider>
     </Authenticated>

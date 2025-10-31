@@ -28,7 +28,7 @@ import { UserAccount } from "@/types/user-tokens";
 import { cn } from "@/lib/utils";
 
 export function MicrosoftAccountSwitcher() {
-  const { isMobile } = useSidebar()
+  const { isMobile, state } = useSidebar()
   const router = useRouter()
   const dispatch = useDispatch();
   const selectedAccount = useSelector((state: RootState) => state.accounts.selectedAccount);
@@ -99,51 +99,75 @@ export function MicrosoftAccountSwitcher() {
 
   if (isLoading) {
     return (
-      <SidebarMenu>
+      <div className={cn(state === "expanded" && "p-2")}>
+        <SidebarMenu>
           <SidebarMenuItem>
-              <SidebarMenuButton size="lg">
-                  <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 rounded-full bg-muted-foreground/20 animate-pulse" />
+              <SidebarMenuButton 
+                size="lg"
+                className={cn(state === "collapsed" && "p-0 justify-center")}
+              >
+                  {state === "collapsed" ? (
+                    <div className="flex w-full items-center justify-center">
+                      <div className="size-8 rounded-lg bg-muted animate-pulse" />
+                    </div>
+                  ) : (
+                    <>
+                      <div className="size-10 rounded-full bg-muted animate-pulse" />
                       <div className="flex flex-col gap-1">
-                          <div className="h-4 w-24 rounded-md bg-muted-foreground/20 animate-pulse" />
-                          <div className="h-3 w-32 rounded-md bg-muted-foreground/20 animate-pulse" />
+                          <div className="h-4 w-24 rounded-md bg-muted animate-pulse" />
+                          <div className="h-3 w-32 rounded-md bg-muted animate-pulse" />
                       </div>
-                  </div>
+                    </>
+                  )}
               </SidebarMenuButton>
           </SidebarMenuItem>
-      </SidebarMenu>
+        </SidebarMenu>
+      </div>
     )
   }
 
   if (accounts.length === 0 || !selectedAccount) {
     return (
-        <SidebarMenu>
+        <div className={cn(state === "expanded" && "p-2")}>
+          <SidebarMenu>
             <SidebarMenuItem>
                 <SidebarMenuButton
                     size="lg"
                     className={cn(
-                      "w-full justify-start gap-3",
                       "border border-dashed border-sidebar-border hover:border-primary/50",
-                      "hover:bg-sidebar-accent/50 transition-colors"
+                      "hover:bg-sidebar-accent/50 transition-colors",
+                      state === "collapsed" && "p-0 justify-center"
                     )}
                     onClick={handleAddAccount}
                 >
-                    <div className="flex size-10 items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/30">
-                        <Plus className="size-5 text-muted-foreground" />
-                    </div>
-                    <div className="flex flex-col items-start">
-                        <span className="font-semibold text-sm">Add Microsoft Account</span>
-                        <span className="text-xs text-muted-foreground">Connect to send emails</span>
-                    </div>
+                    {state === "collapsed" ? (
+                      <div className="flex w-full items-center justify-center">
+                        <div className="flex size-8 items-center justify-center rounded-lg border bg-sidebar-border">
+                            <Plus className="size-4" />
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex size-10 items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/30">
+                            <Plus className="size-5 text-muted-foreground" />
+                        </div>
+                        <div className="flex flex-col items-start">
+                            <span className="font-semibold text-sm">Add Microsoft Account</span>
+                            <span className="text-xs text-muted-foreground">Connect to send emails</span>
+                        </div>
+                      </>
+                    )}
                 </SidebarMenuButton>
             </SidebarMenuItem>
-        </SidebarMenu>
+          </SidebarMenu>
+        </div>
     )
 }
 
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
+    <div className={cn(state === "expanded" && "p-2")}>
+      <SidebarMenu>
+        <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
@@ -152,33 +176,55 @@ export function MicrosoftAccountSwitcher() {
                 "data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground",
                 "hover:bg-sidebar-accent/50 transition-colors",
                 "border border-sidebar-border/50 hover:border-sidebar-border",
-                "shadow-sm"
+                "shadow-sm",
+                state === "collapsed" && "p-0 justify-center"
               )}
             >
-              <Avatar className="size-10 shrink-0 ring-2 ring-background">
-                {selectedAccount.avatar && selectedAccount.avatar.trim() !== '' ? (
-                  <AvatarImage 
-                    src={selectedAccount.avatar} 
-                    alt={getDisplayName(selectedAccount)}
-                    onError={(e) => {
-                      // Hide image on error to show fallback
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                ) : null}
-                <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-sm font-bold">
-                  {getInitials(selectedAccount.name || '', selectedAccount.email || '')}
-                </AvatarFallback>
-              </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight overflow-hidden">
-                <span className="truncate font-semibold text-foreground">
-                  {getDisplayName(selectedAccount)}
-                </span>
-                <span className="truncate text-xs text-muted-foreground">
-                  {selectedAccount.email || 'No email'}
-                </span>
-              </div>
-              <ChevronsUpDown className="ml-auto size-4 shrink-0 text-muted-foreground" />
+              {state === "collapsed" ? (
+                <div className="flex w-full items-center justify-center">
+                  <Avatar className="size-8 rounded-lg">
+                    {selectedAccount.avatar && selectedAccount.avatar.trim() !== '' ? (
+                      <AvatarImage 
+                        src={selectedAccount.avatar} 
+                        alt={getDisplayName(selectedAccount)}
+                        className="rounded-lg"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    ) : null}
+                    <AvatarFallback className="rounded-lg bg-primary text-primary-foreground text-xs font-semibold">
+                      {getInitials(selectedAccount.name || '', selectedAccount.email || '')}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+              ) : (
+                <>
+                  <Avatar className="size-10 shrink-0 ring-2 ring-background">
+                    {selectedAccount.avatar && selectedAccount.avatar.trim() !== '' ? (
+                      <AvatarImage 
+                        src={selectedAccount.avatar} 
+                        alt={getDisplayName(selectedAccount)}
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    ) : null}
+                    <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-sm font-bold">
+                      {getInitials(selectedAccount.name || '', selectedAccount.email || '')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 text-left text-sm leading-tight overflow-hidden">
+                    <span className="truncate font-semibold text-foreground">
+                      {getDisplayName(selectedAccount)}
+                    </span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      {selectedAccount.email || 'No email'}
+                    </span>
+                  </div>
+                  <ChevronsUpDown className="ml-auto size-4 shrink-0 text-muted-foreground" />
+                </>
+              )}
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -250,5 +296,6 @@ export function MicrosoftAccountSwitcher() {
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
+    </div>
   )
 }
