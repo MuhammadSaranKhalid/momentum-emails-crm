@@ -214,6 +214,26 @@ export default function NewCampaignPage() {
   const { mutate: createCampaign } = useCreate();
   const { mutate: createManyRecipients } = useCreateMany();
 
+  // Helper function to fetch all selected members by their IDs
+  const fetchSelectedMembers = async (memberIds: string[]): Promise<Member[]> => {
+    try {
+      const { data, error } = await supabaseBrowserClient
+        .from('members')
+        .select('*')
+        .in('id', memberIds);
+
+      if (error) {
+        console.error('Error fetching selected members:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Error in fetchSelectedMembers:', error);
+      return [];
+    }
+  };
+
   // Save as draft
   const handleSaveDraft = async () => {
     if (!userId) {
@@ -291,23 +311,29 @@ export default function NewCampaignPage() {
               await uploadCampaignAttachments(campaignId as string, attachments);
             }
 
+            // Fetch all selected members by their IDs (bypasses any UI filters)
+            const selectedMembers = await fetchSelectedMembers(selectedMemberIds);
+            
+            console.log(`Creating recipients for ${selectedMembers.length} members out of ${selectedMemberIds.length} selected`);
+
             // Create recipients with email and name, filter out invalid ones
-            const recipientsData = selectedMemberIds
-              .map((memberId) => {
-                const member = members.find((m: Member) => m.id === memberId);
+            const recipientsData = selectedMembers
+              .map((member) => {
                 if (!member || !member.email) {
-                  console.warn(`Skipping member ${memberId} - no email found`);
+                  console.warn(`Skipping member ${member?.id} - no email found`);
                   return null;
                 }
                 return {
                   campaign_id: campaignId,
-                  member_id: memberId,
+                  member_id: member.id,
                   recipient_email: member.email,
                   recipient_name: member.full_name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || '',
                   status: "pending",
                 };
               })
               .filter((recipient): recipient is NonNullable<typeof recipient> => recipient !== null);
+
+            console.log(`Inserting ${recipientsData.length} recipients`);
 
             // Batch insert all recipients at once
             createManyRecipients(
@@ -446,23 +472,29 @@ export default function NewCampaignPage() {
               await uploadCampaignAttachments(campaignId as string, attachments);
             }
 
+            // Fetch all selected members by their IDs (bypasses any UI filters)
+            const selectedMembers = await fetchSelectedMembers(selectedMemberIds);
+            
+            console.log(`Creating recipients for ${selectedMembers.length} members out of ${selectedMemberIds.length} selected`);
+
             // Create recipients with email and name, filter out invalid ones
-            const recipientsData = selectedMemberIds
-              .map((memberId) => {
-                const member = members.find((m: Member) => m.id === memberId);
+            const recipientsData = selectedMembers
+              .map((member) => {
                 if (!member || !member.email) {
-                  console.warn(`Skipping member ${memberId} - no email found`);
+                  console.warn(`Skipping member ${member?.id} - no email found`);
                   return null;
                 }
                 return {
                   campaign_id: campaignId,
-                  member_id: memberId,
+                  member_id: member.id,
                   recipient_email: member.email,
                   recipient_name: member.full_name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || '',
                   status: "pending",
                 };
               })
               .filter((recipient): recipient is NonNullable<typeof recipient> => recipient !== null);
+
+            console.log(`Inserting ${recipientsData.length} recipients`);
 
             // Batch insert all recipients at once
             createManyRecipients(
