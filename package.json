@@ -54,6 +54,7 @@
     "codemirror": "latest",
     "date-fns": "^4.1.0",
     "easymde": "^2.20.0",
+    "imapflow": "^1.1.1",
     "js-cookie": "^3.0.5",
     "lucide-react": "^0.454.0",
     "msal-node": "^0.0.1-security",

@@ -89,7 +89,7 @@ export default function DashboardOverviewPage() {
     },
   ];
 
-  // Fetch inbox emails
+  // Fetch inbox emails (supports both Microsoft and IMAP)
   const fetchInboxEmails = React.useCallback(async () => {
     if (!selectedAccount?.id) return;
     
@@ -97,7 +97,19 @@ export default function DashboardOverviewPage() {
     setError(null);
     
     try {
-      const response = await fetch(`/api/microsoft/emails?accountId=${selectedAccount.id}&folder=inbox&top=10`);
+      // Determine API endpoint based on provider
+      const provider = selectedAccount.provider || 'microsoft';
+      let apiUrl = '';
+      
+      if (provider === 'microsoft') {
+        apiUrl = `/api/microsoft/emails?accountId=${selectedAccount.id}&folder=inbox&top=10`;
+      } else if (provider === 'imap') {
+        apiUrl = `/api/imap/emails?accountId=${selectedAccount.id}&folder=INBOX&limit=10`;
+      } else {
+        throw new Error(`Unsupported provider: ${provider}`);
+      }
+      
+      const response = await fetch(apiUrl);
       
       if (!response.ok) {
         const errorData = await response.json();
@@ -115,9 +127,9 @@ export default function DashboardOverviewPage() {
     } finally {
       setIsLoadingInbox(false);
     }
-  }, [selectedAccount?.id]);
+  }, [selectedAccount?.id, selectedAccount?.provider]);
 
-  // Fetch sent emails
+  // Fetch sent emails (supports both Microsoft and IMAP)
   const fetchSentEmails = React.useCallback(async () => {
     if (!selectedAccount?.id) return;
     
@@ -125,11 +137,32 @@ export default function DashboardOverviewPage() {
     setError(null);
     
     try {
-      const response = await fetch(`/api/microsoft/emails?accountId=${selectedAccount.id}&folder=sentitems&top=10`);
+      // Determine API endpoint based on provider
+      const provider = selectedAccount.provider || 'microsoft';
+      let apiUrl = '';
+      
+      if (provider === 'microsoft') {
+        apiUrl = `/api/microsoft/emails?accountId=${selectedAccount.id}&folder=sentitems&top=10`;
+      } else if (provider === 'imap') {
+        // IMAP sent folder can be "Sent", "Sent Items", or "[Gmail]/Sent Mail"
+        apiUrl = `/api/imap/emails?accountId=${selectedAccount.id}&folder=Sent&limit=10`;
+      } else {
+        throw new Error(`Unsupported provider: ${provider}`);
+      }
+      
+      const response = await fetch(apiUrl);
       
       if (!response.ok) {
         const errorData = await response.json();
         console.error('API Error Response:', errorData);
+        
+        // If it's a folder issue with IMAP, just show empty state instead of error
+        if (provider === 'imap' && (errorData.error?.includes('Command failed') || errorData.error?.includes('does not exist'))) {
+          console.warn('Sent folder not found for IMAP account, showing empty state');
+          setSentEmails([]);
+          return;
+        }
+        
         throw new Error(errorData.message || 'Failed to fetch sent emails');
       }
       
@@ -143,7 +176,7 @@ export default function DashboardOverviewPage() {
     } finally {
       setIsLoadingSent(false);
     }
-  }, [selectedAccount?.id]);
+  }, [selectedAccount?.id, selectedAccount?.provider]);
 
   // Fetch emails when account changes
   React.useEffect(() => {

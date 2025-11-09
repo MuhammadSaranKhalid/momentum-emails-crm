@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ChevronsUpDown, Plus, Check } from "lucide-react"
+import { ChevronsUpDown, Plus, Check, Mail } from "lucide-react"
 import { useDispatch, useSelector } from "react-redux";
 import { useList, useGetIdentity } from "@refinedev/core";
 import { useRouter } from "next/navigation"
@@ -26,28 +26,26 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { UserAccount } from "@/types/user-tokens";
 import { cn } from "@/lib/utils";
+import { AddIMAPDialog } from "@/components/add-imap-dialog";
 
 export function MicrosoftAccountSwitcher() {
   const { isMobile, state } = useSidebar()
   const router = useRouter()
   const dispatch = useDispatch();
   const selectedAccount = useSelector((state: RootState) => state.accounts.selectedAccount);
+  const [showIMAPDialog, setShowIMAPDialog] = React.useState(false);
 
   const { data: identity } = useGetIdentity<{ id: string }>();
 
-  const { result: accountsData, query: {isLoading} } = useList<UserAccount>({
+  // Fetch ALL email accounts (Microsoft + IMAP/SMTP)
+  const { result: accountsData, query: {isLoading, refetch} } = useList<UserAccount>({
     resource: "user_tokens",
       filters: [
           {
               field: "user_id",
               operator: "eq",
               value: identity?.id,
-          },
-          {
-            field: "provider",
-            operator: "eq",
-            value: "microsoft",
-        }
+          }
       ],
       queryOptions: {
           enabled: !!identity?.id,
@@ -56,9 +54,8 @@ export function MicrosoftAccountSwitcher() {
 
   const accounts = React.useMemo(() => {
     const data = accountsData?.data || [];
-    // Debug logging to check data structure
     if (data.length > 0) {
-      console.log('Microsoft Accounts loaded:', data);
+      console.log('Email Accounts loaded:', data);
     }
     return data;
   }, [accountsData?.data]);
@@ -70,9 +67,7 @@ export function MicrosoftAccountSwitcher() {
     }
   }, [accounts, selectedAccount, dispatch]);
 
-  // Helper function to get avatar initials
   const getInitials = (name: string, email: string) => {
-    // Try to use name first
     if (name && name.trim()) {
       const parts = name.trim().split(' ');
       if (parts.length >= 2) {
@@ -80,7 +75,6 @@ export function MicrosoftAccountSwitcher() {
       }
       return name.substring(0, 2).toUpperCase();
     }
-    // Fallback to email
     if (email && email.trim()) {
       const emailUser = email.split('@')[0];
       return emailUser.substring(0, 2).toUpperCase();
@@ -88,13 +82,29 @@ export function MicrosoftAccountSwitcher() {
     return '??';
   };
 
-  // Helper function to get display name
   const getDisplayName = (account: UserAccount) => {
     return account.name || account.email?.split('@')[0] || 'Unknown User';
   };
 
-  const handleAddAccount = () => {
+  const getProviderBadge = (provider: string) => {
+    const badges: Record<string, { label: string; color: string }> = {
+      microsoft: { label: 'Microsoft', color: 'bg-blue-500/10 text-blue-700 dark:text-blue-400' },
+      imap: { label: 'IMAP', color: 'bg-green-500/10 text-green-700 dark:text-green-400' },
+      smtp: { label: 'SMTP', color: 'bg-purple-500/10 text-purple-700 dark:text-purple-400' },
+    };
+    return badges[provider] || { label: provider.toUpperCase(), color: 'bg-gray-500/10 text-gray-700 dark:text-gray-400' };
+  };
+
+  const handleAddMicrosoft = () => {
     router.push('/api/auth/microsoft/connect')
+  }
+
+  const handleAddIMAP = () => {
+    setShowIMAPDialog(true);
+  }
+
+  const handleIMAPSuccess = () => {
+    refetch();
   }
 
   if (isLoading) {
@@ -128,39 +138,83 @@ export function MicrosoftAccountSwitcher() {
 
   if (accounts.length === 0 || !selectedAccount) {
     return (
-        <div className={cn(state === "expanded" && "p-2")}>
-          <SidebarMenu>
-            <SidebarMenuItem>
-                <SidebarMenuButton
-                    size="lg"
-                    className={cn(
-                      "border border-dashed border-sidebar-border hover:border-primary/50",
-                      "hover:bg-sidebar-accent/50 transition-colors",
-                      state === "collapsed" && "p-0 justify-center"
-                    )}
-                    onClick={handleAddAccount}
-                >
-                    {state === "collapsed" ? (
-                      <div className="flex w-full items-center justify-center">
-                        <div className="flex size-8 items-center justify-center rounded-lg border bg-sidebar-border">
-                            <Plus className="size-4" />
-                        </div>
+        <>
+          <div className={cn(state === "expanded" && "p-2")}>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <SidebarMenuButton
+                        size="lg"
+                        className={cn(
+                          "border border-dashed border-sidebar-border hover:border-primary/50",
+                          "hover:bg-sidebar-accent/50 transition-colors",
+                          state === "collapsed" && "p-0 justify-center"
+                        )}
+                    >
+                        {state === "collapsed" ? (
+                          <div className="flex w-full items-center justify-center">
+                            <div className="flex size-8 items-center justify-center rounded-lg border bg-sidebar-border">
+                                <Plus className="size-4" />
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex size-10 items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/30">
+                                <Plus className="size-5 text-muted-foreground" />
+                            </div>
+                            <div className="flex flex-col items-start">
+                                <span className="font-semibold text-sm">Add Email Account</span>
+                                <span className="text-xs text-muted-foreground">Microsoft or IMAP/SMTP</span>
+                            </div>
+                          </>
+                        )}
+                    </SidebarMenuButton>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    className="w-[240px] rounded-lg"
+                    align="start"
+                    side={isMobile ? "bottom" : "right"}
+                    sideOffset={4}
+                  >
+                    <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
+                      Choose Account Type
+                    </DropdownMenuLabel>
+                    <DropdownMenuItem 
+                      onClick={handleAddMicrosoft} 
+                      className="gap-2 p-2 cursor-pointer"
+                    >
+                      <div className="flex size-6 items-center justify-center rounded-md border bg-transparent shrink-0">
+                        <Plus className="size-4" />
                       </div>
-                    ) : (
-                      <>
-                        <div className="flex size-10 items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/30">
-                            <Plus className="size-5 text-muted-foreground" />
-                        </div>
-                        <div className="flex flex-col items-start">
-                            <span className="font-semibold text-sm">Add Microsoft Account</span>
-                            <span className="text-xs text-muted-foreground">Connect to send emails</span>
-                        </div>
-                      </>
-                    )}
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </div>
+                      <div>
+                        <div className="font-medium">Microsoft Account</div>
+                        <div className="text-xs text-muted-foreground">OAuth authentication</div>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={handleAddIMAP} 
+                      className="gap-2 p-2 cursor-pointer"
+                    >
+                      <div className="flex size-6 items-center justify-center rounded-md border bg-transparent shrink-0">
+                        <Mail className="size-4" />
+                      </div>
+                      <div>
+                        <div className="font-medium">IMAP/SMTP Account</div>
+                        <div className="text-xs text-muted-foreground">Gmail, Outlook, Yahoo, etc.</div>
+                      </div>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </div>
+          <AddIMAPDialog
+            open={showIMAPDialog}
+            onOpenChange={setShowIMAPDialog}
+            onSuccess={handleIMAPSuccess}
+          />
+        </>
     )
 }
 
@@ -228,16 +282,17 @@ export function MicrosoftAccountSwitcher() {
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-[280px] rounded-lg"
+            className="w-[--radix-dropdown-menu-trigger-width] min-w-[300px] rounded-lg"
             align="start"
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}
           >
             <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
-              Microsoft Accounts
+              Email Accounts
             </DropdownMenuLabel>
             {accounts.map((account, index) => {
               const isSelected = selectedAccount?.id === account.id;
+              const badge = getProviderBadge(account.provider);
               return (
                 <DropdownMenuItem
                   key={account.id}
@@ -262,9 +317,17 @@ export function MicrosoftAccountSwitcher() {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col flex-1 overflow-hidden">
-                    <span className="truncate text-sm font-medium">
-                      {getDisplayName(account)}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="truncate text-sm font-medium">
+                        {getDisplayName(account)}
+                      </span>
+                      <span className={cn(
+                        "text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0",
+                        badge.color
+                      )}>
+                        {badge.label}
+                      </span>
+                    </div>
                     <span className="truncate text-xs text-muted-foreground">
                       {account.email || 'No email'}
                     </span>
@@ -281,21 +344,40 @@ export function MicrosoftAccountSwitcher() {
               );
             })}
             <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
+              Add New Account
+            </DropdownMenuLabel>
             <DropdownMenuItem 
-              onClick={handleAddAccount} 
+              onClick={handleAddMicrosoft} 
               className="gap-2 p-2 cursor-pointer"
             >
               <div className="flex size-6 items-center justify-center rounded-md border bg-transparent shrink-0">
                 <Plus className="size-4" />
               </div>
               <div className="font-medium text-muted-foreground">
-                Add account
+                Microsoft (OAuth)
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={handleAddIMAP} 
+              className="gap-2 p-2 cursor-pointer"
+            >
+              <div className="flex size-6 items-center justify-center rounded-md border bg-transparent shrink-0">
+                <Mail className="size-4" />
+              </div>
+              <div className="font-medium text-muted-foreground">
+                IMAP/SMTP
               </div>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
+      <AddIMAPDialog
+        open={showIMAPDialog}
+        onOpenChange={setShowIMAPDialog}
+        onSuccess={handleIMAPSuccess}
+      />
     </div>
   )
 }
