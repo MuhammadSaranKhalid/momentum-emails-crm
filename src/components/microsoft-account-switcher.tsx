@@ -1,10 +1,11 @@
 "use client"
 
 import * as React from "react"
-import { ChevronsUpDown, Plus, Check, Mail } from "lucide-react"
+import { ChevronsUpDown, Plus, Check, Mail, Trash2 } from "lucide-react"
 import { useDispatch, useSelector } from "react-redux";
-import { useList, useGetIdentity } from "@refinedev/core";
+import { useList, useGetIdentity, useDelete, useModal } from "@refinedev/core";
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 import {
   DropdownMenu,
@@ -12,9 +13,17 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import { RootState } from "@/store";
 import { setSelectedAccount } from "@/store/features/accounts/accountsSlice";
 import {
@@ -34,8 +43,11 @@ export function MicrosoftAccountSwitcher() {
   const dispatch = useDispatch();
   const selectedAccount = useSelector((state: RootState) => state.accounts.selectedAccount);
   const [showIMAPDialog, setShowIMAPDialog] = React.useState(false);
+  const [accountToDelete, setAccountToDelete] = React.useState<UserAccount | null>(null);
 
   const { data: identity } = useGetIdentity<{ id: string }>();
+  const { visible: deleteDialogVisible, show: showDeleteDialog, close: closeDeleteDialog } = useModal();
+  const { mutate: deleteAccount, mutation: { isPending: isDeleting } } = useDelete();
 
   // Fetch ALL email accounts (Microsoft + IMAP/SMTP)
   const { result: accountsData, query: {isLoading, refetch} } = useList<UserAccount>({
@@ -105,6 +117,50 @@ export function MicrosoftAccountSwitcher() {
 
   const handleIMAPSuccess = () => {
     refetch();
+  }
+
+  const handleDeleteClick = (account: UserAccount, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent dropdown item click
+    setAccountToDelete(account);
+    showDeleteDialog();
+  }
+
+  const handleConfirmDelete = () => {
+    if (!accountToDelete) return;
+
+    deleteAccount(
+      {
+        resource: 'user_tokens',
+        id: accountToDelete.id,
+      },
+      {
+        onSuccess: () => {
+          toast.success('Account deleted successfully');
+          
+          // If the deleted account was selected, select another account
+          if (selectedAccount?.id === accountToDelete.id) {
+            const remainingAccounts = accounts.filter(acc => acc.id !== accountToDelete.id);
+            if (remainingAccounts.length > 0) {
+              dispatch(setSelectedAccount(remainingAccounts[0]));
+            } else {
+              dispatch(setSelectedAccount(null));
+            }
+          }
+          
+          refetch();
+          closeDeleteDialog();
+          setAccountToDelete(null);
+        },
+        onError: (error) => {
+          toast.error(error instanceof Error ? error.message : 'Failed to delete account');
+        },
+      }
+    );
+  }
+
+  const handleCancelDelete = () => {
+    closeDeleteDialog();
+    setAccountToDelete(null);
   }
 
   if (isLoading) {
@@ -264,7 +320,7 @@ export function MicrosoftAccountSwitcher() {
                         }}
                       />
                     ) : null}
-                    <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-sm font-bold">
+                    <AvatarFallback className="bg-linear-to-br from-primary to-primary/80 text-primary-foreground text-sm font-bold">
                       {getInitials(selectedAccount.name || '', selectedAccount.email || '')}
                     </AvatarFallback>
                   </Avatar>
@@ -290,7 +346,7 @@ export function MicrosoftAccountSwitcher() {
             <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
               Email Accounts
             </DropdownMenuLabel>
-            {accounts.map((account, index) => {
+            {accounts.map((account) => {
               const isSelected = selectedAccount?.id === account.id;
               const badge = getProviderBadge(account.provider);
               return (
@@ -298,7 +354,7 @@ export function MicrosoftAccountSwitcher() {
                   key={account.id}
                   onClick={() => dispatch(setSelectedAccount(account))}
                   className={cn(
-                    "gap-2 p-2 cursor-pointer",
+                    "gap-2 p-2 cursor-pointer group",
                     isSelected && "bg-accent"
                   )}
                 >
@@ -332,14 +388,22 @@ export function MicrosoftAccountSwitcher() {
                       {account.email || 'No email'}
                     </span>
                   </div>
-                  {isSelected && (
-                    <Check className="size-4 shrink-0 text-primary" />
-                  )}
-                  {!isSelected && (
-                    <DropdownMenuShortcut className="opacity-60">
-                      ⌘{index + 1}
-                    </DropdownMenuShortcut>
-                  )}
+                  <div className="flex items-center gap-1 shrink-0">
+                    {isSelected && (
+                      <Check className="size-4 text-primary" />
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn(
+                        "h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity",
+                        "hover:bg-destructive/10 hover:text-destructive"
+                      )}
+                      onClick={(e) => handleDeleteClick(account, e)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </DropdownMenuItem>
               );
             })}
@@ -378,6 +442,62 @@ export function MicrosoftAccountSwitcher() {
         onOpenChange={setShowIMAPDialog}
         onSuccess={handleIMAPSuccess}
       />
+      
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogVisible} onOpenChange={closeDeleteDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Delete Email Account</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this account? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {accountToDelete && (
+            <div className="flex items-center gap-3 p-4 rounded-lg border bg-muted/50">
+              <Avatar className="size-10 shrink-0">
+                {accountToDelete.avatar && accountToDelete.avatar.trim() !== '' ? (
+                  <AvatarImage 
+                    src={accountToDelete.avatar} 
+                    alt={getDisplayName(accountToDelete)}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                ) : null}
+                <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+                  {getInitials(accountToDelete.name || '', accountToDelete.email || '')}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col overflow-hidden">
+                <span className="truncate font-medium">
+                  {getDisplayName(accountToDelete)}
+                </span>
+                <span className="truncate text-sm text-muted-foreground">
+                  {accountToDelete.email || 'No email'}
+                </span>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleCancelDelete}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Deleting...' : 'Delete Account'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
