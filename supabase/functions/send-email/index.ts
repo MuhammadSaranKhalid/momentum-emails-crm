@@ -4,6 +4,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createTransport } from "npm:nodemailer@6.9.7";
+import { ImapFlow } from "npm:imapflow@1.0.164";
 
 // ============================================================================
 // Initialize Supabase Admin Client (Global)
@@ -177,6 +178,13 @@ async function getValidEmailCredentials(campaign: any) {
           username: tokenData.smtp_username,
           password: tokenData.smtp_password,
         },
+        imapConfig: tokenData.imap_host ? {
+          host: tokenData.imap_host,
+          port: tokenData.imap_port || 993,
+          secure: tokenData.imap_secure !== false,
+          username: tokenData.imap_username || tokenData.smtp_username,
+          password: tokenData.imap_password || tokenData.smtp_password,
+        } : null,
         accountEmail: tokenData.email,
         accountName: tokenData.name || tokenData.email,
         tokenId: tokenData.id,
@@ -371,10 +379,135 @@ async function sendEmailViaGraph(
 }
 
 // ============================================================================
+// Helper: Save email to IMAP Sent folder
+// ============================================================================
+async function saveToSentFolder(
+  imapConfig: any,
+  rawEmail: string
+) {
+  let client: ImapFlow | null = null;
+  try {
+    // Connect to IMAP
+    client = new ImapFlow({
+      host: imapConfig.host,
+      port: imapConfig.port,
+      secure: imapConfig.secure,
+      auth: {
+        user: imapConfig.username,
+        pass: imapConfig.password,
+      },
+      logger: false,
+    });
+
+    await client.connect();
+    console.log("Connected to IMAP for saving sent email");
+
+    // Try common sent folder names
+    const sentFolders = ["Sent", "Sent Items", "Sent Mail", "[Gmail]/Sent Mail"];
+    let sentFolder = "Sent";
+
+    for (const folder of sentFolders) {
+      try {
+        const lock = await client.getMailboxLock(folder);
+        lock.release();
+        sentFolder = folder;
+        console.log(`Found sent folder: ${folder}`);
+        break;
+      } catch {
+        continue;
+      }
+    }
+
+    // Append message to sent folder
+    await client.append(sentFolder, rawEmail, ["\\Seen"], new Date());
+    console.log(`Email saved to ${sentFolder} folder`);
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Failed to save to Sent folder:", error);
+    return { success: false, error: error.message };
+  } finally {
+    if (client) {
+      try {
+        await client.logout();
+      } catch (err) {
+        console.error("Error during IMAP logout:", err);
+      }
+    }
+  }
+}
+
+// ============================================================================
+// Helper: Build RFC822 email message
+// ============================================================================
+function buildRFC822Message(
+  fromEmail: string,
+  fromName: string,
+  toEmail: string,
+  toName: string,
+  subject: string,
+  htmlBody: string,
+  options: {
+    replyTo?: string;
+    cc?: string[];
+    bcc?: string[];
+    attachments?: any[];
+  } = {}
+): string {
+  const boundary = `----=_Part_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+  const date = new Date().toUTCString();
+
+  let message = "";
+  message += `From: "${fromName}" <${fromEmail}>\r\n`;
+  message += `To: "${toName}" <${toEmail}>\r\n`;
+  message += `Subject: ${subject}\r\n`;
+  message += `Date: ${date}\r\n`;
+  message += `Message-ID: <${Date.now()}.${Math.random().toString(36)}@${fromEmail.split("@")[1]}>\r\n`;
+  message += `MIME-Version: 1.0\r\n`;
+
+  if (options.replyTo) {
+    message += `Reply-To: ${options.replyTo}\r\n`;
+  }
+
+  if (options.cc && options.cc.length > 0) {
+    message += `Cc: ${options.cc.join(", ")}\r\n`;
+  }
+
+  if (options.bcc && options.bcc.length > 0) {
+    message += `Bcc: ${options.bcc.join(", ")}\r\n`;
+  }
+
+  if (options.attachments && options.attachments.length > 0) {
+    message += `Content-Type: multipart/mixed; boundary="${boundary}"\r\n\r\n`;
+    message += `--${boundary}\r\n`;
+    message += `Content-Type: text/html; charset=UTF-8\r\n`;
+    message += `Content-Transfer-Encoding: quoted-printable\r\n\r\n`;
+    message += `${htmlBody}\r\n\r\n`;
+
+    for (const att of options.attachments) {
+      message += `--${boundary}\r\n`;
+      message += `Content-Type: ${att.contentType}; name="${att.filename}"\r\n`;
+      message += `Content-Transfer-Encoding: base64\r\n`;
+      message += `Content-Disposition: attachment; filename="${att.filename}"\r\n\r\n`;
+      message += `${att.content}\r\n\r\n`;
+    }
+
+    message += `--${boundary}--\r\n`;
+  } else {
+    message += `Content-Type: text/html; charset=UTF-8\r\n`;
+    message += `Content-Transfer-Encoding: quoted-printable\r\n\r\n`;
+    message += `${htmlBody}\r\n`;
+  }
+
+  return message;
+}
+
+// ============================================================================
 // Helper: Send email via SMTP (nodemailer)
 // ============================================================================
 async function sendEmailViaSMTP(
   smtpConfig: any,
+  imapConfig: any,
   fromEmail: string,
   fromName: string,
   campaign: any,
@@ -434,6 +567,33 @@ async function sendEmailViaSMTP(
 
     // Send email
     const info = await transporter.sendMail(mailOptions);
+    console.log(`Email sent via SMTP: ${info.messageId}`);
+
+    // Save to Sent folder via IMAP
+    if (imapConfig && imapConfig.host) {
+      console.log("Saving sent email to IMAP Sent folder...");
+      const rawEmail = buildRFC822Message(
+        fromEmail,
+        fromName,
+        recipient.recipient_email,
+        recipient.recipient_name || recipient.recipient_email,
+        personalizedSubject,
+        personalizedBody,
+        {
+          replyTo: campaign.reply_to,
+          cc: campaign.cc,
+          bcc: campaign.bcc,
+          attachments: attachments,
+        }
+      );
+
+      const saveResult = await saveToSentFolder(imapConfig, rawEmail);
+      if (saveResult.success) {
+        console.log("✓ Email saved to Sent folder");
+      } else {
+        console.warn("⚠ Failed to save to Sent folder:", saveResult.error);
+      }
+    }
 
     return {
       success: true,
@@ -469,6 +629,7 @@ async function sendEmail(
   } else if (credentials.type === "smtp") {
     return await sendEmailViaSMTP(
       credentials.smtpConfig,
+      credentials.imapConfig,
       credentials.accountEmail,
       credentials.accountName,
       campaign,

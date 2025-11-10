@@ -139,119 +139,121 @@ export function RecipientsSidebar({
                 <span>Filter</span>
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 p-2" align="start">
-              <div className="space-y-1">
-                {/* Country Filter */}
-                <Collapsible
-                  open={expandedSections.country}
-                  onOpenChange={(open) =>
-                    setExpandedSections((prev) => ({ ...prev, country: open }))
-                  }
-                >
-                  <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md p-2 text-sm font-medium hover:bg-accent">
-                    <span>Country</span>
-                    <ChevronDown
-                      className={`h-4 w-4 transition-transform ${
-                        expandedSections.country ? "rotate-180" : ""
-                      }`}
-                    />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="px-2 pb-2 pt-1 space-y-2">
-                    {availableCountries.length === 0 ? (
-                      <p className="text-sm text-muted-foreground px-2 py-1">No countries available</p>
-                    ) : (
-                      availableCountries.map((country) => (
-                        <Label key={country} className="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-accent">
-                          <Checkbox
-                            checked={filters.country.includes(country)}
-                            onCheckedChange={() => toggleFilter("country", country)}
-                          />
-                          <span className="text-sm">{country}</span>
-                        </Label>
-                      ))
-                    )}
-                  </CollapsibleContent>
-                </Collapsible>
+            <PopoverContent className="w-80 p-0" align="start">
+              <div className="max-h-[350px] overflow-y-auto">
+                <div className="space-y-1 p-2">
+                  {/* Country Filter */}
+                  <Collapsible
+                    open={expandedSections.country}
+                    onOpenChange={(open) =>
+                      setExpandedSections((prev) => ({ ...prev, country: open }))
+                    }
+                  >
+                    <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md p-2 text-sm font-medium hover:bg-accent">
+                      <span>Country</span>
+                      <ChevronDown
+                        className={`h-4 w-4 transition-transform ${
+                          expandedSections.country ? "rotate-180" : ""
+                        }`}
+                      />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="px-2 pb-2 pt-1 space-y-2">
+                      {availableCountries.length === 0 ? (
+                        <p className="text-sm text-muted-foreground px-2 py-1">No countries available</p>
+                      ) : (
+                        availableCountries.map((country) => (
+                          <Label key={country} className="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-accent">
+                            <Checkbox
+                              checked={filters.country.includes(country)}
+                              onCheckedChange={() => toggleFilter("country", country)}
+                            />
+                            <span className="text-sm">{country}</span>
+                          </Label>
+                        ))
+                      )}
+                    </CollapsibleContent>
+                  </Collapsible>
 
-                {/* Import/Export Filter */}
-                <Collapsible
-                  open={expandedSections.type}
-                  onOpenChange={(open) =>
-                    setExpandedSections((prev) => ({ ...prev, type: open }))
-                  }
-                >
-                  <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md p-2 text-sm font-medium hover:bg-accent">
-                    <span>Import/Export</span>
-                    <ChevronDown
-                      className={`h-4 w-4 transition-transform ${
-                        expandedSections.type ? "rotate-180" : ""
-                      }`}
-                    />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="px-2 pb-2 pt-1 space-y-2">
-                    <Label className="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-accent">
-                      <Checkbox
-                        checked={filters.type.includes("Import")}
-                        onCheckedChange={() => toggleFilter("type", "Import")}
+                  {/* Import/Export Filter */}
+                  <Collapsible
+                    open={expandedSections.type}
+                    onOpenChange={(open) =>
+                      setExpandedSections((prev) => ({ ...prev, type: open }))
+                    }
+                  >
+                    <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md p-2 text-sm font-medium hover:bg-accent">
+                      <span>Import/Export</span>
+                      <ChevronDown
+                        className={`h-4 w-4 transition-transform ${
+                          expandedSections.type ? "rotate-180" : ""
+                        }`}
                       />
-                      <span className="text-sm">Import</span>
-                    </Label>
-                    <Label className="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-accent">
-                      <Checkbox
-                        checked={filters.type.includes("Export")}
-                        onCheckedChange={() => toggleFilter("type", "Export")}
-                      />
-                      <span className="text-sm">Export</span>
-                    </Label>
-                    <Label className="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-accent">
-                      <Checkbox
-                        checked={filters.type.includes("Both")}
-                        onCheckedChange={() => toggleFilter("type", "Both")}
-                      />
-                      <span className="text-sm">Both</span>
-                    </Label>
-                  </CollapsibleContent>
-                </Collapsible>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="px-2 pb-2 pt-1 space-y-2">
+                      <Label className="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-accent">
+                        <Checkbox
+                          checked={filters.type.includes("Import")}
+                          onCheckedChange={() => toggleFilter("type", "Import")}
+                        />
+                        <span className="text-sm">Import</span>
+                      </Label>
+                      <Label className="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-accent">
+                        <Checkbox
+                          checked={filters.type.includes("Export")}
+                          onCheckedChange={() => toggleFilter("type", "Export")}
+                        />
+                        <span className="text-sm">Export</span>
+                      </Label>
+                      <Label className="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-accent">
+                        <Checkbox
+                          checked={filters.type.includes("Both")}
+                          onCheckedChange={() => toggleFilter("type", "Both")}
+                        />
+                        <span className="text-sm">Both</span>
+                      </Label>
+                    </CollapsibleContent>
+                  </Collapsible>
 
-                {/* Mode of Shipment Filter */}
-                <Collapsible
-                  open={expandedSections.shipment}
-                  onOpenChange={(open) =>
-                    setExpandedSections((prev) => ({ ...prev, shipment: open }))
-                  }
-                >
-                  <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md p-2 text-sm font-medium hover:bg-accent">
-                    <span>Mode of Shipment</span>
-                    <ChevronDown
-                      className={`h-4 w-4 transition-transform ${
-                        expandedSections.shipment ? "rotate-180" : ""
-                      }`}
-                    />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="px-2 pb-2 pt-1 space-y-2">
-                    <Label className="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-accent">
-                      <Checkbox
-                        checked={filters.shipment.includes("Air")}
-                        onCheckedChange={() => toggleFilter("shipment", "Air")}
+                  {/* Mode of Shipment Filter */}
+                  <Collapsible
+                    open={expandedSections.shipment}
+                    onOpenChange={(open) =>
+                      setExpandedSections((prev) => ({ ...prev, shipment: open }))
+                    }
+                  >
+                    <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md p-2 text-sm font-medium hover:bg-accent">
+                      <span>Mode of Shipment</span>
+                      <ChevronDown
+                        className={`h-4 w-4 transition-transform ${
+                          expandedSections.shipment ? "rotate-180" : ""
+                        }`}
                       />
-                      <span className="text-sm">Air</span>
-                    </Label>
-                    <Label className="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-accent">
-                      <Checkbox
-                        checked={filters.shipment.includes("Sea")}
-                        onCheckedChange={() => toggleFilter("shipment", "Sea")}
-                      />
-                      <span className="text-sm">Sea</span>
-                    </Label>
-                    <Label className="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-accent">
-                      <Checkbox
-                        checked={filters.shipment.includes("Both")}
-                        onCheckedChange={() => toggleFilter("shipment", "Both")}
-                      />
-                      <span className="text-sm">Both</span>
-                    </Label>
-                  </CollapsibleContent>
-                </Collapsible>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="px-2 pb-2 pt-1 space-y-2">
+                      <Label className="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-accent">
+                        <Checkbox
+                          checked={filters.shipment.includes("Air")}
+                          onCheckedChange={() => toggleFilter("shipment", "Air")}
+                        />
+                        <span className="text-sm">Air</span>
+                      </Label>
+                      <Label className="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-accent">
+                        <Checkbox
+                          checked={filters.shipment.includes("Sea")}
+                          onCheckedChange={() => toggleFilter("shipment", "Sea")}
+                        />
+                        <span className="text-sm">Sea</span>
+                      </Label>
+                      <Label className="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-accent">
+                        <Checkbox
+                          checked={filters.shipment.includes("Both")}
+                          onCheckedChange={() => toggleFilter("shipment", "Both")}
+                        />
+                        <span className="text-sm">Both</span>
+                      </Label>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </div>
               </div>
             </PopoverContent>
           </Popover>
